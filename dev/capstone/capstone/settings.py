@@ -49,7 +49,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'agendabarber.urls'
+ROOT_URLCONF = 'capstone.urls'
 
 TEMPLATES = [
     {
@@ -67,7 +67,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'agendabarber.wsgi.application'
+WSGI_APPLICATION = 'capstone.wsgi.application'
 
 
 # Database
