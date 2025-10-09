@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Catálogo de Cortes{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center text-primary mb-5">Catálogo de Cortes</h1>
+    <div class="row g-4">
+        {% for corte in cortes %}
+        <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm border-0 h-100">
+                <img src="{% static corte.imagen %}" class="card-img-top" alt="{{ corte.nombre }}">
+                <div class="card-body text-center">
+                    <h5 class="card-title">{{ corte.nombre }}</h5>
+                    <p class="card-text text-muted">${{ corte.precio }}</p>
+                    <a href="#" class="btn btn-outline-primary">Agendar</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+@font-face{
+    font-family: miFuente;
+    src: url('fonts/Roboto-Regular.ttf') format('truetype');
+}
+
+body{
+    font-family: miFuente;
+}
