@@ -1,24 +1,35 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Catálogo de Cortes{% endblock %}
+{% block title %}Catálogo de Servicios{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="text-center text-primary mb-5">Catálogo de Cortes</h1>
+    <h1 class="text-center text-primary mb-5">Catálogo de Servicios 💈</h1>
+
     <div class="row g-4">
-        {% for corte in cortes %}
+        {% for servicio in servicios %}
         <div class="col-md-3 col-sm-6">
             <div class="card shadow-sm border-0 h-100">
-                <img src="{% static corte.imagen %}" class="card-img-top" alt="{{ corte.nombre }}">
+                {% if servicio.imagen %}
+                    <img src="{{ servicio.imagen.url }}" class="card-img-top" alt="{{ servicio.nombre }}">
+                {% else %}
+                    <img src="{% static 'agendabarber/img/default.jpg' %}" class="card-img-top" alt="Sin imagen">
+                {% endif %}
                 <div class="card-body text-center">
-                    <h5 class="card-title">{{ corte.nombre }}</h5>
-                    <p class="card-text text-muted">${{ corte.precio }}</p>
-                    <a href="#" class="btn btn-outline-primary">Agendar</a>
+                    <h5 class="card-title">{{ servicio.nombre }}</h5>
+                    <p class="card-text text-muted">${{ servicio.precio }}</p>
+                    <p class="card-text small text-secondary">{{ servicio.descripcion }}</p>
+                    <a href="crearReserva" class="btn btn-outline-primary">Agendar</a>
                 </div>
             </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted mt-4">
+            <p>No hay servicios disponibles aún.</p>
         </div>
         {% endfor %}
     </div>
 </div>
 {% endblock %}
+
