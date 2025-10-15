@@ -1,4 +1,20 @@
 {% extends 'base.html' %}
 {% block content %}
+<button class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling">Informacion importante</button>
 
+<div class="offcanvas offcanvas-start show text-bg-dark" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
+    id="offcanvasScrolling" aria-labelledby="offcanvasScrollingLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasScrollingLabel">Conceptos que debes entender</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <p>Actualmente en internet hay muchos conceptos que te pueden dificultar la eleccion de tu corte de pelo pero aqui te los explico de manera sencilla.</p>
+        <p>FADE: Fade es literalmente degradado en ingles y cuando dicen high, medium o low, se refieren a la altura de este que se define que tan corto lo quieres.</p>
+        <p>TEXTURA: Se refiere a crear irregularidades en la parte superior para crear movimiento en el pelo y dar un aspecto "despeinado" o mas casual.</p>
+        <p>COMPRIMIDO: Hace referencia a que tan estirado quieres el degradado, un degradado comprimido ocupara muy poco espacio pero tendra un mayor impacto visual, en cambio uno muy estirado se vera muy pulido pero con menor impacto.</p>
+        <p>TERMINACION: Un degradado tradicional puede tener terminacion redonda o en punta (tambien conocida como en V), no siempre un degradado ser rapado o con la 0, lo que permite tener patillas en punta o cuadradas y la parte posterior redonda o cuadrada.</p>
+        <p>ESPERO SEA UTIL ESTA INFORMACION</p>
+    </div>
+</div>
 {% endblock %}
