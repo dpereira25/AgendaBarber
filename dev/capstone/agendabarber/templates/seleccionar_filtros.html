@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container my-5">
+    <h1 class="mb-4">1. Selecciona tu Cita</h1>
+
+    <form method="POST" action="{% url 'seleccionar_slot' %}">
+        {% csrf_token %}
+
+        <div class="row g-3">
+
+            <div class="col-md-4">
+                <label for="id_barbero" class="form-label">Barbero:</label>
+                <select name="barbero" id="id_barbero" class="form-select" required>
+                    <option value="">Selecciona un Barbero</option>
+                    {% for barbero in barberos %}
+                    <option value="{{ barbero.id }}">{{ barbero.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label for="id_servicio" class="form-label">Servicio:</label>
+                <select name="servicio" id="id_servicio" class="form-select" required>
+                    <option value="">Selecciona un Servicio</option>
+                    {% for servicio in servicios %}
+                    <option value="{{ servicio.id }}">{{ servicio.nombre }} (${{ servicio.precio }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label for="id_fecha" class="form-label">Fecha:</label>
+                <input type="date" name="fecha" id="id_fecha" class="form-control" min="{{ 'now'|date:'Y-m-d' }}"
+                    required>
+            </div>
+
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-4">Ver Disponibilidad</button>
+
+    </form>
+</div>
+
+{% endblock %}
