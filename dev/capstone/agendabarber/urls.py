@@ -19,6 +19,8 @@ urlpatterns = [
     
     # 3. Página de confirmación
     path('reservar/confirmacion/', views.confirmacionReserva, name='confirmacion_reserva'),
+    
+    path('auth/registro/', views.registro_usuario, name='registro'),
 ]
 
 # Configuración de archivos estáticos y media (fotos de barberos/servicios) en entorno de desarrollo

@@ -127,3 +127,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# ----------------------------------------------------------------------
+# 💡 CONFIGURACIÓN DE AUTENTICACIÓN (LOGIN/LOGOUT)
+# ----------------------------------------------------------------------
+
+# Nombre de la URL de tu página de inicio (debe coincidir con el 'name' en urls.py)
+LOGIN_REDIRECT_URL = 'inicio' 
+
+# URL a la que se redirige después de cerrar sesión
+LOGOUT_REDIRECT_URL = 'inicio' 
+
+# Nombre de la URL para la página de login. Usamos 'login' que es la que Django genera
+LOGIN_URL = 'login'

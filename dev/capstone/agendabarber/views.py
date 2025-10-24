@@ -6,15 +6,15 @@ from datetime import timedelta, datetime, time
 from django.utils import timezone
 from django.db.models import Q 
 
-# ----------------------------------------------------------------------
-# 💡 REGLAS DE HORARIO FIJO (Definidas aquí temporalmente)
-# ----------------------------------------------------------------------
+# 💡 Nuevas importaciones para autenticación
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.decorators import login_required
 
-# Días 1 (Lunes) a 5 (Viernes)
+# ----------------------------------------------------------------------
+# REGLAS DE HORARIO FIJO (Se mantiene)
+# ----------------------------------------------------------------------
 HORARIO_SEMANAL = {'inicio': time(18, 0), 'fin': time(21, 0)} 
-# Día 6 (Sábado)
 HORARIO_SABADO = {'inicio': time(9, 0), 'fin': time(18, 0)}
-# Día 7 (Domingo) - Cerrado
 
 # ----------------------------------------------------------------------
 # FUNCIONES DE NAVEGACIÓN (Se mantienen)
@@ -34,21 +34,42 @@ def confirmacionReserva(request):
     return render(request, 'confirmacionReserva.html')
 
 # ----------------------------------------------------------------------
-# FUNCIÓN PARA SELECCIONAR SLOTS DISPONIBLES (Horario Fijo)
+# 💡 NUEVA FUNCIÓN: REGISTRO DE USUARIO
 # ----------------------------------------------------------------------
-
-def seleccionar_slot(request):
-    
+def registro_usuario(request):
     if request.method == 'POST':
-        # Obtención de datos del formulario de selección de Barbero/Servicio/Fecha
+        # Instancia del formulario con los datos recibidos (ej. usuario, contraseña 1, contraseña 2)
+        form = UserCreationForm(request.POST) 
+        
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, '¡Cuenta creada con éxito! Ya puedes iniciar sesión.')
+            # Redirige a la página de login (definida en las urls de django.contrib.auth)
+            return redirect('login') 
+        else:
+            # Si el formulario no es válido (ej. contraseñas no coinciden, usuario ya existe),
+            # mostramos los errores en el template.
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{error}")
+    else:
+        # Petición GET: Muestra el formulario de registro vacío
+        form = UserCreationForm()
+        
+    return render(request, 'registration/registro.html', {'form': form})
+
+# ----------------------------------------------------------------------
+# FUNCIÓN PARA SELECCIONAR SLOTS (Se mantiene)
+# ----------------------------------------------------------------------
+def seleccionar_slot(request):
+    # ... (Toda tu lógica de seleccionar_slot se mantiene exactamente igual) ...
+    if request.method == 'POST':
         barbero_id = request.POST.get('barbero')
         servicio_id = request.POST.get('servicio')
         fecha_str = request.POST.get('fecha')
         
-        # Validación de datos inicial
         if not all([barbero_id, servicio_id, fecha_str]):
             messages.error(request, "Por favor, selecciona un barbero, servicio y fecha.")
-            # Redirigir al formulario inicial si faltan datos
             return render(request, 'seleccionar_filtros.html', {'barberos': Barbero.objects.all(), 'servicios': Servicio.objects.all()})
             
         try:
@@ -57,24 +78,18 @@ def seleccionar_slot(request):
             fecha_reserva = datetime.strptime(fecha_str, '%Y-%m-%d').date()
         except ValueError:
             messages.error(request, "Formato de fecha inválido.")
-            return redirect('inicio') # O la URL de tu formulario de inicio
+            return redirect('inicio') 
         
+        dia_semana = fecha_reserva.isoweekday() 
         
-        # ----------------------------------------------------------------------
-        # 2. DETERMINAR HORAS LABORALES FIJAS
-        # ----------------------------------------------------------------------
-        
-        dia_semana = fecha_reserva.isoweekday() # 1=Lunes a 7=Domingo
-        
-        if 1 <= dia_semana <= 5: # Lunes a Viernes
+        if 1 <= dia_semana <= 5: 
             horario = HORARIO_SEMANAL
-        elif dia_semana == 6: # Sábado
+        elif dia_semana == 6: 
             horario = HORARIO_SABADO
-        else: # Domingo (Cerrado)
+        else: 
             messages.error(request, f'La barbería está cerrada el día {fecha_reserva.strftime("%A")}.')
             return redirect('inicio')
         
-        # Convertir la hora de inicio y fin laboral a objetos datetime (con timezone)
         hora_inicio_laboral = timezone.make_aware(
             datetime.combine(fecha_reserva, horario['inicio'])
         )
@@ -84,24 +99,13 @@ def seleccionar_slot(request):
         
         duracion_servicio = timedelta(minutes=servicio.duracion_minutos)
         
-        # ----------------------------------------------------------------------
-        # 3. GENERAR SLOTS DE TIEMPO POTENCIALES
-        # ----------------------------------------------------------------------
-        
         slots_potenciales = []
         slot_actual = hora_inicio_laboral
         
-        # Generar slots que terminan antes o exactamente a la hora de fin laboral
         while slot_actual + duracion_servicio <= hora_fin_laboral:
             slots_potenciales.append(slot_actual)
-            # Avanzar al siguiente slot según la duración del servicio
             slot_actual += duracion_servicio 
 
-        # ----------------------------------------------------------------------
-        # 4. FILTRAR SLOTS DISPONIBLES
-        # ----------------------------------------------------------------------
-        
-        # Obtener las reservas que ya están ocupadas por ese barbero ese día
         reservas_ocupadas = Reserva.objects.filter(
             barbero=barbero,
             inicio__date=fecha_reserva,
@@ -114,7 +118,6 @@ def seleccionar_slot(request):
             slot_fin = slot + duracion_servicio
             esta_ocupado = False
             
-            # Comprobar solapamiento: [Reserva.Inicio < Slot.Fin] AND [Reserva.Fin > Slot.Inicio]
             for reserva in reservas_ocupadas:
                 if reserva.inicio < slot_fin and reserva.fin > slot:
                     esta_ocupado = True
@@ -122,10 +125,6 @@ def seleccionar_slot(request):
             
             if not esta_ocupado:
                 slots_disponibles.append(slot)
-
-        # ----------------------------------------------------------------------
-        # 5. RENDERIZAR RESULTADOS
-        # ----------------------------------------------------------------------
         
         context = {
             'barbero': barbero,
@@ -137,7 +136,6 @@ def seleccionar_slot(request):
         return render(request, 'slots_disponibles.html', context)
         
     else:
-        # Petición GET: Cargar datos para el formulario inicial
         context = {
             'barberos': Barbero.objects.all(),
             'servicios': Servicio.objects.all(),
@@ -146,45 +144,40 @@ def seleccionar_slot(request):
 
 
 # ----------------------------------------------------------------------
-# FUNCIÓN DE CREACIÓN DE RESERVA (Ajustada para Horario Fijo)
+# 💡 FUNCIÓN DE CREACIÓN DE RESERVA (Actualizada con @login_required)
 # ----------------------------------------------------------------------
 
+@login_required # 1. Añadimos el decorador
 def crearReserva(request):
     if request.method == 'POST':
         form = ReservaForm(request.POST)
         if form.is_valid():
             reserva = form.save(commit=False)
             
-            if not request.user.is_authenticated:
-                messages.error(request, 'Debes iniciar sesión para hacer una reserva.')
-                return redirect('login_url') 
-                
+            # 2. Eliminamos el 'if not request.user.is_authenticated'
+            #    El decorador @login_required ya lo maneja.
+            #    Si el usuario no está logueado, será redirigido a 'login' (definido en settings.py).
+            
+            # 3. Asignamos el usuario logueado
             reserva.cliente = request.user
             
             servicio = reserva.servicio
             barbero = reserva.barbero
             
-            # --- 1. CÁLCULO DE HORARIO DE FIN ---
             duracion = timedelta(minutes=servicio.duracion_minutos) 
             inicio_reserva = reserva.inicio 
             fin_reserva = inicio_reserva + duracion
 
-            # ----------------------------------------------------------------------
-            # --- 2. VALIDACIÓN DE HORARIO DE TRABAJO FIJO ---
-            # ----------------------------------------------------------------------
-            
+            # ... (Toda tu lógica de validación de horario fijo se mantiene) ...
             dia_semana = inicio_reserva.isoweekday() 
-            
-            if 1 <= dia_semana <= 5: # Lunes a Viernes
+            if 1 <= dia_semana <= 5: 
                 horario = HORARIO_SEMANAL
-            elif dia_semana == 6: # Sábado
+            elif dia_semana == 6: 
                 horario = HORARIO_SABADO
-            else: # Domingo (Cerrado)
+            else: 
                 messages.error(request, f'La barbería está cerrada los domingos.')
                 return render(request, 'crearReserva.html', {'form': form})
             
-            
-            # Crear objetos datetime con la hora de inicio y fin del horario fijo
             hora_inicio_laboral = timezone.make_aware(
                 datetime.combine(inicio_reserva.date(), horario['inicio'])
             )
@@ -192,15 +185,11 @@ def crearReserva(request):
                 datetime.combine(inicio_reserva.date(), horario['fin'])
             )
 
-            # Verificar si la reserva completa está dentro del horario laboral fijo
             if inicio_reserva < hora_inicio_laboral or fin_reserva > hora_fin_laboral:
                 messages.error(request, f'La reserva está fuera del horario fijo establecido.')
                 return render(request, 'crearReserva.html', {'form': form})
 
-            # ----------------------------------------------------------------------
-            # --- 3. VALIDACIÓN DE SOLAPAMIENTO (Se mantiene) ---
-            # ----------------------------------------------------------------------
-            
+            # ... (Toda tu lógica de validación de solapamiento se mantiene) ...
             solapamientos = Reserva.objects.filter(
                 barbero=barbero,
                 inicio__date=inicio_reserva.date(), 
