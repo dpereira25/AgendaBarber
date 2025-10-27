@@ -28,7 +28,9 @@ def cargarCatalogo(request):
     return render(request, 'catalogo.html', {'servicios': servicios})
 
 def cargarInicio(request):
-    return render(request, 'inicio.html')
+    servicios = Servicio.objects.all()[:3]
+    context = {'servicios': servicios}
+    return render(request, 'inicio.html', context)
 
 def confirmacionReserva(request):
     return render(request, 'confirmacionReserva.html')

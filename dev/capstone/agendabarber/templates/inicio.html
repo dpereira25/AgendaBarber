@@ -1,8 +1,44 @@
 {% extends 'base.html' %}
 {% block content %}
-<button class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling">Informacion importante</button>
 
-<div class="offcanvas offcanvas-start show text-bg-dark" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
+{% if servicios %}
+<h2 class="mb-4">Nuestros Servicios Destacados</h2>
+
+<div class="scrollable-cards-container mb-5">
+    
+    {% for servicio in servicios %}
+    <div class="card-feature"> 
+        <div class="card h-100 shadow border-0 bg-white">
+            
+            <div class="ratio ratio-4x3"> 
+                <img src="{{ servicio.imagen.url }}" class="card-img-top w-100 h-100" 
+                     alt="{{ servicio.nombre }}" style="object-fit: cover; border-radius: .375rem .375rem 0 0;">
+            </div>
+            
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title text-primary">{{ servicio.nombre }}</h5>
+                <p class="card-text text-muted small">
+                    {{ servicio.descripcion|truncatewords:15 }}
+                </p>
+                <p class="h4 text-danger mt-auto">
+                    ${{ servicio.precio }}
+                </p>
+            </div>
+            <div class="card-footer bg-white border-0 pt-0">
+                <a href="{% url 'seleccionar_slot' %}?servicio_id={{ servicio.id }}" class="btn btn-dark w-100">
+                    Reservar ahora
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+{% endif %}
+
+<button class="btn btn-info mt-5" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling">Información importante</button>
+
+<div class="offcanvas offcanvas-start text-bg-dark" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
     id="offcanvasScrolling" aria-labelledby="offcanvasScrollingLabel">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="offcanvasScrollingLabel">Conceptos que debes entender</h5>
