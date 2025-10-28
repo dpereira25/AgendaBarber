@@ -10,15 +10,15 @@ urlpatterns = [
     path('base/', views.cargarBase, name='base'),
     path('catalogo/', views.cargarCatalogo, name='catalogo'),
     
-    # Rutas del proceso de reserva (Flow de 3 pasos)
-    # 1. Selección de filtros y cálculo de slots disponibles (Lógica de horarios fijos)
-    path('reservar/slot/', views.seleccionar_slot, name='seleccionar_slot'),
+    # Rutas del proceso de reserva
+    # Formulario principal unificado
+    path('reservar/', views.crearReserva, name='crear_reserva'),
     
-    # 2. Creación final de la reserva (Recibe el slot seleccionado y lo guarda)
-    path('reservar/crear/', views.crearReserva, name='crear_reserva'),
-    
-    # 3. Página de confirmación
+    # Página de confirmación
     path('reservar/confirmacion/', views.confirmacionReserva, name='confirmacion_reserva'),
+    
+    # Vista AJAX para obtener horas disponibles
+    path('api/horas-disponibles/', views.obtener_horas_disponibles, name='horas_disponibles'),
     
     path('auth/registro/', views.registro_usuario, name='registro'),
 ]

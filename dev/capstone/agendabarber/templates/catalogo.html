@@ -7,21 +7,19 @@
 <div class="container my-5">
     <h1 class="text-center mb-5">Catálogo Completo de Servicios 💈</h1>
 
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 g-4"> 
-        
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 g-4">
+
         {% for servicio in servicios %}
         <div class="col">
-            <div class="card h-100 bg-white"> 
-                
-                <div class="ratio ratio-4x3"> 
+            <div class="card h-100 bg-white">
+
+                <div class="ratio ratio-4x3">
                     {% if servicio.imagen %}
-                        <img src="{{ servicio.imagen.url }}" class="card-img-top w-100 h-100" 
-                             alt="{{ servicio.nombre }}" 
-                             style="object-fit: cover; border-radius: .375rem .375rem 0 0;">
+                    <img src="{{ servicio.imagen.url }}" class="card-img-top w-100 h-100" alt="{{ servicio.nombre }}"
+                        style="object-fit: cover; border-radius: .375rem .375rem 0 0;">
                     {% else %}
-                        <img src="{% static 'agendabarber/img/default.jpg' %}" class="card-img-top w-100 h-100" 
-                             alt="Sin imagen" 
-                             style="object-fit: cover; border-radius: .375rem .375rem 0 0;">
+                    <img src="{% static 'agendabarber/img/default.jpg' %}" class="card-img-top w-100 h-100"
+                        alt="Sin imagen" style="object-fit: cover; border-radius: .375rem .375rem 0 0;">
                     {% endif %}
                 </div>
 
@@ -32,9 +30,9 @@
                         {{ servicio.descripcion|truncatewords:10 }}
                     </p>
                 </div>
-                
+
                 <div class="card-footer bg-white border-0 pt-0">
-                    <a href="{% url 'seleccionar_slot' %}?servicio_id={{ servicio.id }}" class="btn btn-dark w-100">
+                    <a href="{% url 'crear_reserva' %}?servicio_id={{ servicio.id }}" class="btn btn-dark w-100">
                         Agendar
                     </a>
                 </div>

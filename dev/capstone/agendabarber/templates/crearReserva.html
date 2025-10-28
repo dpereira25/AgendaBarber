@@ -1,24 +1,122 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
+{% load static %}
 {% block content %}
 
 <div class="container my-5">
-    
-    {% if messages %}
-        <ul class="messages list-unstyled">
-            {% for message in messages %}
-                <li{% if message.tags %} class="alert alert-{{ message.tags }}"{% endif %}>
-                    {{ message }}
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <div class="alert alert-info">
-            Procesando reserva... Si ves esto por mucho tiempo, algo salió mal.
-        </div>
-    {% endif %}
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-calendar-plus me-2"></i>Nueva Reserva</h3>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
 
-    <a href="{% url 'inicio' %}" class="btn btn-primary mt-4">Volver al inicio</a>
-    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        <strong>Error:</strong>
+                        {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <form method="post" id="reservaForm">
+                        {% csrf_token %}
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-user-tie me-1"></i>{{ form.barbero.label }}
+                                </label>
+                                {{ form.barbero }}
+                                {% if form.barbero.errors %}
+                                <div class="text-danger small mt-1">{{ form.barbero.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-cut me-1"></i>{{ form.servicio.label }}
+                                </label>
+                                {{ form.servicio }}
+                                {% if form.servicio.errors %}
+                                <div class="text-danger small mt-1">{{ form.servicio.errors.0 }}</div>
+                                {% endif %}
+                                <div id="servicio-info" class="form-text"></div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-calendar me-1"></i>{{ form.fecha.label }}
+                                </label>
+                                {{ form.fecha }}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>Las fechas pasadas están bloqueadas
+                                </div>
+                                {% if form.fecha.errors %}
+                                <div class="text-danger small mt-1">{{ form.fecha.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-clock me-1"></i>{{ form.hora.label }}
+                                </label>
+                                {{ form.hora }}
+                                <div id="horario-sugerencia" class="form-text"></div>
+                                {% if form.hora.errors %}
+                                <div class="text-danger small mt-1">{{ form.hora.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Info de horarios mejorada -->
+                        <div class="alert alert-info border-0 bg-light">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <i class="fas fa-business-time text-primary"></i>
+                                    <div class="fw-bold">Lunes - Viernes</div>
+                                    <div class="small">18:00 - 21:00</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <i class="fas fa-calendar-week text-success"></i>
+                                    <div class="fw-bold">Sábados</div>
+                                    <div class="small">09:00 - 18:00</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <i class="fas fa-times-circle text-danger"></i>
+                                    <div class="fw-bold">Domingos</div>
+                                    <div class="small">Cerrado</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-3">
+                            <a href="{% url 'inicio' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Volver al inicio
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check me-1"></i>Crear Reserva
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- JavaScript externo para validaciones y funcionalidad AJAX -->
+<script src="{% static 'js/reserva-validation.js' %}"></script>
 
 {% endblock %}

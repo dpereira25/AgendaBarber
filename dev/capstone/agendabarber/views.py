@@ -60,152 +60,103 @@ def registro_usuario(request):
         
     return render(request, 'registration/registro.html', {'form': form})
 
-# ----------------------------------------------------------------------
-# FUNCIÓN PARA SELECCIONAR SLOTS (Se mantiene)
-# ----------------------------------------------------------------------
-def seleccionar_slot(request):
-    # ... (Toda tu lógica de seleccionar_slot se mantiene exactamente igual) ...
-    if request.method == 'POST':
-        barbero_id = request.POST.get('barbero')
-        servicio_id = request.POST.get('servicio')
-        fecha_str = request.POST.get('fecha')
-        
-        if not all([barbero_id, servicio_id, fecha_str]):
-            messages.error(request, "Por favor, selecciona un barbero, servicio y fecha.")
-            return render(request, 'seleccionar_filtros.html', {'barberos': Barbero.objects.all(), 'servicios': Servicio.objects.all()})
-            
-        try:
-            barbero = get_object_or_404(Barbero, pk=barbero_id)
-            servicio = get_object_or_404(Servicio, pk=servicio_id)
-            fecha_reserva = datetime.strptime(fecha_str, '%Y-%m-%d').date()
-        except ValueError:
-            messages.error(request, "Formato de fecha inválido.")
-            return redirect('inicio') 
-        
-        dia_semana = fecha_reserva.isoweekday() 
-        
-        if 1 <= dia_semana <= 5: 
-            horario = HORARIO_SEMANAL
-        elif dia_semana == 6: 
-            horario = HORARIO_SABADO
-        else: 
-            messages.error(request, f'La barbería está cerrada el día {fecha_reserva.strftime("%A")}.')
-            return redirect('inicio')
-        
-        hora_inicio_laboral = timezone.make_aware(
-            datetime.combine(fecha_reserva, horario['inicio'])
-        )
-        hora_fin_laboral = timezone.make_aware(
-            datetime.combine(fecha_reserva, horario['fin'])
-        )
-        
-        duracion_servicio = timedelta(minutes=servicio.duracion_minutos)
-        
-        slots_potenciales = []
-        slot_actual = hora_inicio_laboral
-        
-        while slot_actual + duracion_servicio <= hora_fin_laboral:
-            slots_potenciales.append(slot_actual)
-            slot_actual += duracion_servicio 
+from django.http import JsonResponse
 
-        reservas_ocupadas = Reserva.objects.filter(
-            barbero=barbero,
-            inicio__date=fecha_reserva,
-            estado__in=['Pendiente', 'Confirmada'] 
-        ).order_by('inicio')
+def obtener_horas_disponibles(request):
+    """Vista AJAX para obtener horas disponibles según fecha y barbero"""
+    if request.method == 'GET':
+        fecha_str = request.GET.get('fecha')
+        barbero_id = request.GET.get('barbero')
         
-        slots_disponibles = []
+        if not fecha_str or not barbero_id:
+            return JsonResponse({'horas': []})
         
-        for slot in slots_potenciales:
-            slot_fin = slot + duracion_servicio
-            esta_ocupado = False
+        try:
+            fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            barbero = Barbero.objects.get(id=barbero_id)
+        except (ValueError, Barbero.DoesNotExist):
+            return JsonResponse({'horas': []})
+        
+        # Determinar horario según el día
+        dia_semana = fecha.isoweekday()
+        if 1 <= dia_semana <= 5:  # Lunes a viernes
+            hora_inicio = time(18, 0)
+            hora_fin = time(21, 0)
+        elif dia_semana == 6:  # Sábado
+            hora_inicio = time(9, 0)
+            hora_fin = time(18, 0)
+        else:  # Domingo
+            return JsonResponse({'horas': []})
+        
+        # Generar horas disponibles (cada hora)
+        horas_disponibles = []
+        hora_actual = hora_inicio
+        
+        while hora_actual < hora_fin:
+            # Verificar si esta hora está ocupada
+            inicio_slot = timezone.make_aware(datetime.combine(fecha, hora_actual))
+            fin_slot = inicio_slot + timedelta(hours=1)
             
-            for reserva in reservas_ocupadas:
-                if reserva.inicio < slot_fin and reserva.fin > slot:
-                    esta_ocupado = True
-                    break 
+            ocupado = Reserva.objects.filter(
+                barbero=barbero,
+                inicio__date=fecha,
+                estado__in=['Pendiente', 'Confirmada'],
+                inicio__lt=fin_slot,
+                fin__gt=inicio_slot
+            ).exists()
             
-            if not esta_ocupado:
-                slots_disponibles.append(slot)
+            if not ocupado:
+                horas_disponibles.append({
+                    'value': hora_actual.strftime('%H:%M'),
+                    'text': hora_actual.strftime('%H:%M')
+                })
+            
+            # Avanzar una hora
+            hora_actual = (datetime.combine(fecha, hora_actual) + timedelta(hours=1)).time()
         
-        context = {
-            'barbero': barbero,
-            'servicio': servicio,
-            'fecha_seleccionada': fecha_reserva,
-            'slots_disponibles': slots_disponibles,
-        }
-        
-        return render(request, 'slots_disponibles.html', context)
-        
-    else:
-        context = {
-            'barberos': Barbero.objects.all(),
-            'servicios': Servicio.objects.all(),
-        }
-        return render(request, 'seleccionar_filtros.html', context)
+        return JsonResponse({'horas': horas_disponibles})
+    
+    return JsonResponse({'horas': []})
 
 
 # ----------------------------------------------------------------------
 # 💡 FUNCIÓN DE CREACIÓN DE RESERVA (Actualizada con @login_required)
 # ----------------------------------------------------------------------
 
-@login_required # 1. Añadimos el decorador
+@login_required
 def crearReserva(request):
+    # Obtener servicio preseleccionado si viene de la página de inicio
+    servicio_id = request.GET.get('servicio_id')
+    initial_data = {}
+    if servicio_id:
+        try:
+            servicio = Servicio.objects.get(id=servicio_id)
+            initial_data['servicio'] = servicio
+        except Servicio.DoesNotExist:
+            pass
+    
     if request.method == 'POST':
         form = ReservaForm(request.POST)
         if form.is_valid():
+            # El formulario ya validó todo, solo necesitamos crear la reserva
             reserva = form.save(commit=False)
-            
-            # 2. Eliminamos el 'if not request.user.is_authenticated'
-            #    El decorador @login_required ya lo maneja.
-            #    Si el usuario no está logueado, será redirigido a 'login' (definido en settings.py).
-            
-            # 3. Asignamos el usuario logueado
             reserva.cliente = request.user
             
-            servicio = reserva.servicio
-            barbero = reserva.barbero
+            # Usar los valores calculados por el formulario
+            cleaned_data = form.cleaned_data
+            reserva.inicio = cleaned_data['inicio_calculado']
+            reserva.fin = cleaned_data['fin_calculado']
             
-            duracion = timedelta(minutes=servicio.duracion_minutos) 
-            inicio_reserva = reserva.inicio 
-            fin_reserva = inicio_reserva + duracion
-
-            # ... (Toda tu lógica de validación de horario fijo se mantiene) ...
-            dia_semana = inicio_reserva.isoweekday() 
-            if 1 <= dia_semana <= 5: 
-                horario = HORARIO_SEMANAL
-            elif dia_semana == 6: 
-                horario = HORARIO_SABADO
-            else: 
-                messages.error(request, f'La barbería está cerrada los domingos.')
-                return render(request, 'crearReserva.html', {'form': form})
-            
-            hora_inicio_laboral = timezone.make_aware(
-                datetime.combine(inicio_reserva.date(), horario['inicio'])
-            )
-            hora_fin_laboral = timezone.make_aware(
-                datetime.combine(inicio_reserva.date(), horario['fin'])
-            )
-
-            if inicio_reserva < hora_inicio_laboral or fin_reserva > hora_fin_laboral:
-                messages.error(request, f'La reserva está fuera del horario fijo establecido.')
-                return render(request, 'crearReserva.html', {'form': form})
-
-            # ... (Toda tu lógica de validación de solapamiento se mantiene) ...
-            solapamientos = Reserva.objects.filter(
-                barbero=barbero,
-                inicio__date=inicio_reserva.date(), 
-                inicio__lt=fin_reserva,
-                fin__gt=inicio_reserva
-            ).exists()
-
-            if solapamientos:
-                messages.error(request, 'Esta franja horaria ya está ocupada por otra reserva.')
-            else:
+            try:
                 reserva.save()
                 messages.success(request, 'Reserva creada correctamente.')
-                return redirect('confirmacionReserva') 
+                return redirect('confirmacion_reserva')
+            except Exception as e:
+                messages.error(request, 'Error al guardar la reserva. Inténtalo de nuevo.')
+        else:
+            # Los errores del formulario se mostrarán automáticamente en el template
+            messages.error(request, 'Por favor corrige los errores en el formulario.')
     else:
-        form = ReservaForm()
+        form = ReservaForm(initial=initial_data)
     
     return render(request, 'crearReserva.html', {'form': form})

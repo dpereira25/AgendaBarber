@@ -64,8 +64,8 @@ class Reserva(models.Model):
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='Pendiente')
 
     def save(self, *args, **kwargs):
-        # La duración de 60 minutos se obtiene automáticamente de self.servicio
-        if self.servicio and self.inicio:
+        # Solo calcular fin si no está establecido (para mantener compatibilidad)
+        if self.servicio and self.inicio and not self.fin:
             self.fin = self.inicio + timedelta(minutes=self.servicio.duracion_minutos)
         super().save(*args, **kwargs)
 
