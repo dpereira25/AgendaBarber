@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>Agenda de {{ barbero.nombre }}
+                    </h3>
+                </div>
+                <div class="card-body">
+
+                    {% if reservas %}
+                    <!-- Filtros rápidos -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary active"
+                                    onclick="filtrarReservas('todas')">
+                                    Todas
+                                </button>
+                                <button type="button" class="btn btn-outline-success" onclick="filtrarReservas('hoy')">
+                                    Hoy
+                                </button>
+                                <button type="button" class="btn btn-outline-info" onclick="filtrarReservas('semana')">
+                                    Esta Semana
+                                </button>
+                                <button type="button" class="btn btn-outline-warning"
+                                    onclick="filtrarReservas('pendientes')">
+                                    Pendientes
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="filtroFecha" onchange="filtrarPorFecha()">
+                                <button class="btn btn-outline-secondary" onclick="limpiarFiltros()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de reservas -->
+                    <div class="row" id="listaReservas">
+                        {% for reserva in reservas %}
+                        <div class="col-12 mb-3 reserva-item" data-fecha="{{ reserva.inicio|date:'Y-m-d' }}"
+                            data-estado="{{ reserva.estado }}" data-hoy="{% now 'Y-m-d' %}">
+                            <div class="card {% if reserva.inicio|date:'Y-m-d' == today %}border-primary{% endif %}">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-2">
+                                            <div class="text-center">
+                                                <div class="h4 mb-0 text-primary">{{ reserva.inicio|date:"d" }}</div>
+                                                <div class="small text-muted">{{ reserva.inicio|date:"M Y" }}</div>
+                                                <div class="small">{{ reserva.inicio|date:"l" }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="text-center">
+                                                <div class="h5 mb-0">{{ reserva.inicio|date:"H:i" }}</div>
+                                                <div class="small text-muted">{{ reserva.fin|date:"H:i" }}</div>
+                                                <span class="badge bg-secondary">{{ reserva.servicio.duracion_minutos }}min</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div>
+                                                <i class="fas fa-user text-primary me-2"></i>
+                                                <strong>{{ reserva.cliente.get_full_name|default:reserva.cliente.username }}</strong>
+                                            </div>
+                                            <div class="small text-muted">
+                                                <i class="fas fa-envelope me-1"></i>{{ reserva.cliente.email }}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div>
+                                                <i class="fas fa-scissors text-success me-2"></i>
+                                                <strong>{{ reserva.servicio.nombre }}</strong>
+                                            </div>
+                                            <div class="small text-muted">
+                                                <i class="fas fa-dollar-sign me-1"></i>${{ reserva.servicio.precio|floatformat:0 }}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="text-center">
+                                                <span
+                                                    class="badge {% if reserva.estado == 'Confirmada' %}bg-success{% elif reserva.estado == 'Pendiente' %}bg-warning{% elif reserva.estado == 'Cancelada' %}bg-danger{% else %}bg-info{% endif %} mb-2">
+                                                    {{ reserva.estado }}
+                                                </span>
+                                                <br>
+                                                {% if reserva.pagado %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check me-1"></i>Pagado
+                                                </span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-clock me-1"></i>Pendiente
+                                                </span>
+                                                {% endif %}
+
+                                                <!-- Acciones rápidas -->
+                                                {% if reserva.estado == 'Pendiente' %}
+                                                    <div class="mt-2">
+                                                        <button class="btn btn-success btn-sm" onclick="confirmarReserva('{{ reserva.id }}')">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                        <button class="btn btn-danger btn-sm" onclick="cancelarReserva('{{ reserva.id }}')">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                {% elif reserva.estado == 'Confirmada' and reserva.inicio|date:'Y-m-d' <= today %}
+                                                    <div class="mt-2">
+                                                        <button class="btn btn-info btn-sm" onclick="completarReserva('{{ reserva.id }}')">
+                                                            <i class="fas fa-check-double"></i> Completar
+                                                        </button>
+                                                    </div>
+                                                {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Estadísticas del barbero -->
+                <div class="row mt-4">
+                    <div class="col-md-2 col-6 mb-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h4>{{ reservas|length }}</h4>
+                                <small>Total</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h4 id="countPendientes">0</h4>
+                                <small>Pendientes</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h4 id="countConfirmadas">0</h4>
+                                <small>Confirmadas</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h4 id="countHoy">0</h4>
+                                <small>Hoy</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-3">
+                        <div class="card bg-secondary text-white">
+                            <div class="card-body text-center">
+                                <h4 id="countSemana">0</h4>
+                                <small>Esta Semana</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-6 mb-3">
+                        <div class="card bg-dark text-white">
+                            <div class="card-body text-center">
+                                <h4 id="ingresosMes">$0</h4>
+                                <small>Este Mes</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No tienes reservas aún</h4>
+                    <p class="text-muted">Las reservas de tus clientes aparecerán aquí.</p>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+    // Funciones para filtrar reservas
+    function filtrarReservas(tipo) {
+        const reservas = document.querySelectorAll('.reserva-item');
+        const hoy = new Date().toISOString().split('T')[0];
+
+        // Actualizar botones activos
+        document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        reservas.forEach(reserva => {
+            const fecha = reserva.dataset.fecha;
+            const estado = reserva.dataset.estado;
+            let mostrar = false;
+
+            switch (tipo) {
+                case 'todas':
+                    mostrar = true;
+                    break;
+                case 'hoy':
+                    mostrar = fecha === hoy;
+                    break;
+                case 'semana':
+                    const fechaReserva = new Date(fecha);
+                    const inicioSemana = new Date();
+                    inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay());
+                    const finSemana = new Date(inicioSemana);
+                    finSemana.setDate(inicioSemana.getDate() + 6);
+                    mostrar = fechaReserva >= inicioSemana && fechaReserva <= finSemana;
+                    break;
+                case 'pendientes':
+                    mostrar = estado === 'Pendiente';
+                    break;
+            }
+
+            reserva.style.display = mostrar ? 'block' : 'none';
+        });
+    }
+
+    function filtrarPorFecha() {
+        const fechaSeleccionada = document.getElementById('filtroFecha').value;
+        const reservas = document.querySelectorAll('.reserva-item');
+
+        reservas.forEach(reserva => {
+            const fecha = reserva.dataset.fecha;
+            reserva.style.display = fecha === fechaSeleccionada ? 'block' : 'none';
+        });
+    }
+
+    function limpiarFiltros() {
+        document.getElementById('filtroFecha').value = '';
+        filtrarReservas('todas');
+    }
+
+    // Funciones de acción
+    function confirmarReserva(reservaId) {
+        if (confirm('¿Confirmar esta reserva?')) {
+            // Implementar lógica AJAX
+            alert('Funcionalidad pendiente de implementar');
+        }
+    }
+
+    function cancelarReserva(reservaId) {
+        if (confirm('¿Estás seguro de cancelar esta reserva?\n\nEl cliente será notificado de la cancelación.')) {
+            // Mostrar indicador de carga
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            button.disabled = true;
+            
+            // Realizar petición AJAX
+            fetch('/cancelar-reserva/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    'reserva_id': reservaId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Mostrar mensaje de éxito
+                    showAlert('success', data.message);
+                    
+                    // Recargar la página después de un breve delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    // Mostrar mensaje de error
+                    showAlert('error', data.message);
+                    
+                    // Restaurar botón
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('error', 'Error de conexión. Inténtalo de nuevo.');
+                
+                // Restaurar botón
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+        }
+    }
+
+    function completarReserva(reservaId) {
+        if (confirm('¿Marcar como completada?')) {
+            // Implementar lógica AJAX
+            alert('Funcionalidad pendiente de implementar');
+        }
+    }
+
+    // Función para obtener el token CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Función para mostrar alertas
+    function showAlert(type, message) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+        
+        const alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                <i class="fas ${iconClass} me-2"></i>${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        // Insertar al inicio del contenedor principal
+        const container = document.querySelector('.container');
+        container.insertAdjacentHTML('afterbegin', alertHtml);
+    }
+
+    // Calcular estadísticas al cargar
+    document.addEventListener('DOMContentLoaded', function () {
+        calcularEstadisticas();
+    });
+
+    function calcularEstadisticas() {
+        const reservas = document.querySelectorAll('.reserva-item');
+        const hoy = new Date().toISOString().split('T')[0];
+
+        let pendientes = 0, confirmadas = 0, reservasHoy = 0, reservasSemana = 0;
+
+        reservas.forEach(reserva => {
+            const fecha = reserva.dataset.fecha;
+            const estado = reserva.dataset.estado;
+
+            if (estado === 'Pendiente') pendientes++;
+            if (estado === 'Confirmada') confirmadas++;
+            if (fecha === hoy) reservasHoy++;
+
+            // Calcular semana
+            const fechaReserva = new Date(fecha);
+            const inicioSemana = new Date();
+            inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay());
+            const finSemana = new Date(inicioSemana);
+            finSemana.setDate(inicioSemana.getDate() + 6);
+            if (fechaReserva >= inicioSemana && fechaReserva <= finSemana) {
+                reservasSemana++;
+            }
+        });
+
+        document.getElementById('countPendientes').textContent = pendientes;
+        document.getElementById('countConfirmadas').textContent = confirmadas;
+        document.getElementById('countHoy').textContent = reservasHoy;
+        document.getElementById('countSemana').textContent = reservasSemana;
+    }
+</script>
+
+{% endblock %}

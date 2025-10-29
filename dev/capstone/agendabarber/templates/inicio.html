@@ -1,8 +1,173 @@
 {% extends 'base.html' %}
 {% block content %}
 
+<!-- Mensaje de bienvenida personalizado -->
+{% if user.is_authenticated %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert {% if es_barbero %}alert-primary{% else %}alert-success{% endif %} border-0 shadow-sm">
+                <h4 class="alert-heading mb-2">
+                    <i class="fas {% if es_barbero %}fa-user-tie{% else %}fa-user{% endif %} me-2"></i>
+                    ¡Bienvenido{% if es_barbero %} de vuelta{% endif %}, {{ user.get_full_name|default:user.username }}!
+                </h4>
+                <p class="mb-0">
+                    {% if es_barbero %}
+                        Aquí tienes un resumen de tus reservas pendientes para hoy.
+                    {% else %}
+                        Aquí puedes ver tus próximas reservas y agendar nuevos servicios.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4 fw-bold text-primary mb-3">Agenda Barber 💈</h1>
+            <p class="lead text-muted mb-4">Tu barbería de confianza. Agenda tu cita de forma fácil y rápida.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                </a>
+                <a href="{% url 'registro' %}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-user-plus me-2"></i>Registrarse
+                </a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Sección personalizada para barberos -->
+{% if user.is_authenticated and es_barbero %}
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-calendar-day me-2"></i>Tus Reservas Pendientes de Hoy
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if reservas_hoy %}
+                    <div class="row">
+                        {% for reserva in reservas_hoy %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-warning">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title mb-0">{{ reserva.inicio|date:"H:i" }}</h6>
+                                        <span class="badge bg-warning">Pendiente</span>
+                                    </div>
+                                    <p class="card-text mb-1">
+                                        <i class="fas fa-user me-1"></i>
+                                        <strong>{{ reserva.cliente.get_full_name|default:reserva.cliente.username }}</strong>
+                                    </p>
+                                    <p class="card-text mb-1">
+                                        <i class="fas fa-cut me-1"></i>{{ reserva.servicio.nombre }}
+                                    </p>
+                                    <p class="card-text mb-0 text-muted small">
+                                        <i class="fas fa-clock me-1"></i>{{ reserva.servicio.duracion_minutos }} min
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{% url 'agenda_barbero' %}" class="btn btn-primary">
+                            <i class="fas fa-calendar-alt me-1"></i>Ver Agenda Completa
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No tienes reservas pendientes para hoy</h5>
+                        <p class="text-muted">¡Perfecto! Puedes relajarte o revisar tu agenda completa.</p>
+                        <a href="{% url 'agenda_barbero' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-calendar-alt me-1"></i>Ver Mi Agenda
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Sección personalizada para clientes -->
+{% if user.is_authenticated and es_cliente %}
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Tus Próximas Reservas
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if proximas_reservas %}
+                    <div class="row">
+                        {% for reserva in proximas_reservas %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card {% if reserva.estado == 'Confirmada' %}border-success{% else %}border-warning{% endif %}">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title mb-0">{{ reserva.inicio|date:"d/m" }} - {{ reserva.inicio|date:"H:i" }}</h6>
+                                        <span class="badge {% if reserva.estado == 'Confirmada' %}bg-success{% else %}bg-warning{% endif %}">
+                                            {{ reserva.estado }}
+                                        </span>
+                                    </div>
+                                    <p class="card-text mb-1">
+                                        <i class="fas fa-user-tie me-1"></i>
+                                        <strong>{{ reserva.barbero.nombre }}</strong>
+                                    </p>
+                                    <p class="card-text mb-1">
+                                        <i class="fas fa-cut me-1"></i>{{ reserva.servicio.nombre }}
+                                    </p>
+                                    <p class="card-text mb-0 text-muted small">
+                                        <i class="fas fa-calendar me-1"></i>{{ reserva.inicio|date:"l" }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{% url 'mis_reservas' %}" class="btn btn-success">
+                            <i class="fas fa-list me-1"></i>Ver Todas Mis Reservas
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-plus fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No tienes reservas próximas</h5>
+                        <p class="text-muted">¡Es hora de agendar tu próximo corte!</p>
+                        <a href="{% url 'crear_reserva' %}" class="btn btn-success">
+                            <i class="fas fa-plus me-1"></i>Crear Nueva Reserva
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 {% if servicios %}
-<h2 class="mb-4">Nuestros Servicios Destacados</h2>
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-center">
+            {% if user.is_authenticated %}
+                Servicios Disponibles
+            {% else %}
+                Nuestros Servicios Destacados
+            {% endif %}
+        </h2>
+        {% if not user.is_authenticated %}
+            <p class="text-center text-muted">Descubre nuestros servicios profesionales de barbería</p>
+        {% endif %}
+    </div>
+</div>
 
 <div class="scrollable-cards-container mb-5">
     

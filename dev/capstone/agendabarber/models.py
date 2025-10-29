@@ -17,12 +17,19 @@ DIA_CHOICES = [
 ]
 
 class Barbero(models.Model):
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, 
+                                   help_text="Usuario asociado a este barbero")
     nombre = models.CharField(max_length=100)
     experiencia = models.PositiveIntegerField(help_text="Años de experiencia")
     foto = models.ImageField(upload_to='barberos/', null=True, blank=True)
 
     def __str__(self):
         return self.nombre
+    
+    @property
+    def es_usuario_barbero(self):
+        """Verifica si tiene un usuario asociado"""
+        return self.usuario is not None
 
 class Servicio(models.Model):
     nombre = models.CharField(max_length=100)

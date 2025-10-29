@@ -42,10 +42,36 @@
                                 Hola, {{ user.username }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                <li><a class="dropdown-item" href="#">Mi Perfil</a></li>
-                                <li><a class="dropdown-item" href="#">Mis Reservas</a></li>
+                                <li><a class="dropdown-item" href="#">
+                                    <i class="fas fa-user me-2"></i>Mi Perfil
+                                </a></li>
+                                
+                                {% if es_cliente %}
+                                    <li><a class="dropdown-item" href="{% url 'mis_reservas' %}">
+                                        <i class="fas fa-calendar-check me-2"></i>Mis Reservas
+                                    </a></li>
+                                {% endif %}
+                                
+                                {% if es_barbero %}
+                                    <li><a class="dropdown-item" href="{% url 'agenda_barbero' %}">
+                                        <i class="fas fa-calendar-alt me-2"></i>Mi Agenda
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#">
+                                        <i class="fas fa-chart-bar me-2"></i>Estadísticas
+                                    </a></li>
+                                {% endif %}
+                                
+                                {% if user.is_staff %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="/admin/">
+                                        <i class="fas fa-cog me-2"></i>Administración
+                                    </a></li>
+                                {% endif %}
+                                
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
+                                <li><a class="dropdown-item" href="{% url 'logout' %}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                                </a></li>
                             </ul>
                         </li>
                     {% else %}

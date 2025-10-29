@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-calendar-check me-2"></i>Mis Reservas
+                    </h3>
+                </div>
+                <div class="card-body">
+
+                    {% if reservas %}
+                    <div class="row">
+                        {% for reserva in reservas %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div
+                                class="card h-100 {% if reserva.estado == 'Confirmada' %}border-success{% elif reserva.estado == 'Pendiente' %}border-warning{% elif reserva.estado == 'Cancelada' %}border-danger{% else %}border-info{% endif %}">
+                                <div
+                                    class="card-header {% if reserva.estado == 'Confirmada' %}bg-success{% elif reserva.estado == 'Pendiente' %}bg-warning{% elif reserva.estado == 'Cancelada' %}bg-danger{% else %}bg-info{% endif %} text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-scissors me-1"></i>{{ reserva.servicio.nombre }}
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        <i class="fas fa-user-tie text-primary me-2"></i>
+                                        <strong>Barbero:</strong> {{ reserva.barbero.nombre }}
+                                    </div>
+                                    <div class="mb-2">
+                                        <i class="fas fa-calendar text-info me-2"></i>
+                                        <strong>Fecha:</strong> {{ reserva.inicio|date:"d/m/Y" }}
+                                    </div>
+                                    <div class="mb-2">
+                                        <i class="fas fa-clock text-warning me-2"></i>
+                                        <strong>Hora:</strong> {{ reserva.inicio|date:"H:i" }} - {{ reserva.fin|date:"H:i" }}
+                                    </div>
+                                    <div class="mb-2">
+                                        <i class="fas fa-dollar-sign text-success me-2"></i>
+                                        <strong>Precio:</strong> ${{ reserva.servicio.precio|floatformat:0 }}
+                                    </div>
+                                    <div class="mb-3">
+                                        <span
+                                            class="badge {% if reserva.estado == 'Confirmada' %}bg-success{% elif reserva.estado == 'Pendiente' %}bg-warning{% elif reserva.estado == 'Cancelada' %}bg-danger{% else %}bg-info{% endif %}">
+                                            {{ reserva.estado }}
+                                        </span>
+                                        {% if reserva.pagado %}
+                                        <span class="badge bg-success ms-1">
+                                            <i class="fas fa-check me-1"></i>Pagado
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-secondary ms-1">
+                                            <i class="fas fa-clock me-1"></i>Pendiente pago
+                                        </span>
+                                        {% endif %}
+                                    </div>
+
+                                    {% if reserva.estado == 'Pendiente' %}
+                                    {% now "Y-m-d H:i" as current_datetime %}
+                                    {% if reserva.inicio|date:"Y-m-d H:i" > current_datetime %}
+                                    <div class="d-grid">
+                                        <button class="btn btn-outline-danger btn-sm"
+                                            onclick="cancelarReserva('{{ reserva.id }}')">
+                                            <i class="fas fa-times me-1"></i>Cancelar
+                                        </button>
+                                    </div>
+                                    {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer text-muted small">
+                                    {% now "Y-m-d H:i" as current_datetime %}
+                                    {% if reserva.inicio|date:"Y-m-d H:i" > current_datetime %}
+                                    <i class="fas fa-hourglass-half me-1"></i>Próxima cita
+                                    {% else %}
+                                    <i class="fas fa-history me-1"></i>Cita pasada
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Estadísticas rápidas -->
+                    <div class="row mt-4">
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ total_reservas }}</h4>
+                                    <small>Total Reservas</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ reservas_confirmadas }}</h4>
+                                    <small>Confirmadas</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ reservas_pendientes }}</h4>
+                                    <small>Pendientes</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ reservas_completadas }}</h4>
+                                    <small>Completadas</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No tienes reservas aún</h4>
+                        <p class="text-muted">¡Agenda tu primera cita con nosotros!</p>
+                        <a href="{% url 'crear_reserva' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Crear Primera Reserva
+                        </a>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function cancelarReserva(reservaId) {
+    if (confirm('¿Estás seguro de que quieres cancelar esta reserva?\n\nEsta acción no se puede deshacer.')) {
+        // Mostrar indicador de carga
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelando...';
+        button.disabled = true;
+        
+        // Realizar petición AJAX
+        fetch('/cancelar-reserva/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                'reserva_id': reservaId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mostrar mensaje de éxito
+                showAlert('success', data.message);
+                
+                // Recargar la página después de un breve delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                // Mostrar mensaje de error
+                showAlert('error', data.message);
+                
+                // Restaurar botón
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('error', 'Error de conexión. Inténtalo de nuevo.');
+            
+            // Restaurar botón
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+}
+
+// Función para obtener el token CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Función para mostrar alertas
+function showAlert(type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+    
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            <i class="fas ${iconClass} me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Insertar al inicio del contenedor principal
+    const container = document.querySelector('.container');
+    container.insertAdjacentHTML('afterbegin', alertHtml);
+}
+</script>
+
+{% endblock %}
