@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Panel Administrativo{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <h1 class="text-center">Panel Administrativo 💈</h1>
+        
+        <!-- Filtros de tiempo -->
+        <div class="d-flex gap-2">
+            <select id="periodFilter" class="form-select" style="width: auto;">
+                <option value="last_7_days" {% if period == 'last_7_days' %}selected{% endif %}>Últimos 7 días</option>
+                <option value="last_30_days" {% if period == 'last_30_days' %}selected{% endif %}>Últimos 30 días</option>
+                <option value="this_month" {% if period == 'this_month' %}selected{% endif %}>Este mes</option>
+                <option value="last_month" {% if period == 'last_month' %}selected{% endif %}>Mes pasado</option>
+                <option value="this_year" {% if period == 'this_year' %}selected{% endif %}>Este año</option>
+            </select>
+            
+            <button id="exportBtn" class="btn btn-outline-primary">
+                <i class="fas fa-download" id="exportIcon"></i> 
+                <span id="exportText">Exportar CSV</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Métricas principales -->
+    <div class="row text-center mb-5">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 p-4 h-100">
+                <div class="card-body">
+                    <h5 class="text-muted mb-2">Total Ingresos</h5>
+                    <h2 class="text-success fw-bold mb-0">${{ total_ingresos|floatformat:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 p-4 h-100">
+                <div class="card-body">
+                    <h5 class="text-muted mb-2">Total Reservas</h5>
+                    <h2 class="text-primary fw-bold mb-0">{{ total_reservas }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 p-4 h-100">
+                <div class="card-body">
+                    <h5 class="text-muted mb-2">Valor Promedio</h5>
+                    <h2 class="text-info fw-bold mb-0">${{ valor_promedio|floatformat:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 p-4 h-100">
+                <div class="card-body">
+                    <h5 class="text-muted mb-2">Tasa Completación</h5>
+                    <h2 class="text-warning fw-bold mb-0">{{ tasa_completacion|floatformat:1 }}%</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos principales -->
+    <div class="row mb-5">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Tendencia de Ingresos</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Servicios Más Populares</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for servicio in top_servicios %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <strong>{{ servicio.nombre }}</strong>
+                                    <br>
+                                    <small class="text-muted">${{ servicio.precio }}</small>
+                                </div>
+                                <span class="badge bg-primary rounded-pill">{{ servicio.total }}</span>
+                            </li>
+                        {% empty %}
+                            <li class="list-group-item text-muted text-center px-0">
+                                No hay datos disponibles
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos adicionales -->
+    <div class="row mb-5">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Reservas por Día de la Semana</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="weekdayChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Estado de Reservas</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rendimiento de barberos (solo si no es barbero específico) -->
+    {% if not is_barbero %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Rendimiento de Barberos</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="barberChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Horas pico -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Análisis de Horas Pico</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="peakHoursChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-center" style="z-index: 9999;">
+    <div class="spinner-border text-light" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+
+<script>
+// Variables globales
+let charts = {};
+const currentPeriod = '{{ period }}';
+const isBarbero = {{ is_barbero|yesno:"true,false" }};
+
+// Configuración de colores
+const colors = {
+    primary: '#0d6efd',
+    success: '#198754',
+    warning: '#ffc107',
+    danger: '#dc3545',
+    info: '#0dcaf0',
+    secondary: '#6c757d'
+};
+
+// Inicializar dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    setupEventListeners();
+    loadAllData();
+});
+
+function initializeCharts() {
+    // Gráfico de ingresos
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    charts.revenue = new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Ingresos ($)',
+                data: [],
+                borderColor: colors.success,
+                backgroundColor: colors.success + '20',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Ingresos: $' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Gráfico de días de la semana
+    const weekdayCtx = document.getElementById('weekdayChart').getContext('2d');
+    charts.weekday = new Chart(weekdayCtx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Reservas',
+                data: [],
+                backgroundColor: colors.primary,
+                borderColor: colors.primary,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Gráfico de estado de reservas
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    charts.status = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: [
+                    colors.success,
+                    colors.warning,
+                    colors.danger,
+                    colors.secondary
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Gráfico de horas pico
+    const peakHoursCtx = document.getElementById('peakHoursChart').getContext('2d');
+    charts.peakHours = new Chart(peakHoursCtx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Reservas por Hora',
+                data: [],
+                backgroundColor: colors.info,
+                borderColor: colors.info,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Gráfico de barberos (solo si no es barbero específico)
+    if (!isBarbero) {
+        const barberCtx = document.getElementById('barberChart').getContext('2d');
+        charts.barber = new Chart(barberCtx, {
+            type: 'horizontalBar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Ingresos ($)',
+                    data: [],
+                    backgroundColor: colors.warning,
+                    borderColor: colors.warning,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Ingresos: $' + context.parsed.x.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+function setupEventListeners() {
+    // Filtro de período
+    document.getElementById('periodFilter').addEventListener('change', function() {
+        const newPeriod = this.value;
+        window.location.href = `?period=${newPeriod}`;
+    });
+
+    // Botón de exportar
+    document.getElementById('exportBtn').addEventListener('click', function() {
+        const period = document.getElementById('periodFilter').value;
+        const btn = this;
+        const icon = document.getElementById('exportIcon');
+        const text = document.getElementById('exportText');
+        
+        // Mostrar estado de carga
+        btn.disabled = true;
+        icon.className = 'fas fa-spinner fa-spin';
+        text.textContent = 'Generando...';
+        
+        console.log('Exportando con período:', period); // Debug
+        
+        // Crear un enlace temporal para forzar la descarga
+        const link = document.createElement('a');
+        link.href = `/panel/export/?period=${period}&format=csv`;
+        link.download = `reporte_barberia_${period}_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Restaurar estado del botón después de un momento
+        setTimeout(() => {
+            btn.disabled = false;
+            icon.className = 'fas fa-download';
+            text.textContent = 'Exportar CSV';
+        }, 2000);
+    });
+}
+
+function loadAllData() {
+    showLoading();
+    
+    const period = document.getElementById('periodFilter').value;
+    
+    // Cargar datos de ingresos
+    fetch(`/panel/api/revenue-data/?period=${period}`)
+        .then(response => response.json())
+        .then(data => {
+            updateRevenueChart(data);
+        })
+        .catch(error => console.error('Error loading revenue data:', error));
+
+    // Cargar analytics de reservas
+    fetch(`/panel/api/booking-analytics/?period=${period}`)
+        .then(response => response.json())
+        .then(data => {
+            updateBookingCharts(data);
+        })
+        .catch(error => console.error('Error loading booking analytics:', error));
+
+    // Cargar rendimiento de barberos (solo si no es barbero específico)
+    if (!isBarbero) {
+        fetch(`/panel/api/barber-performance/?period=${period}`)
+            .then(response => response.json())
+            .then(data => {
+                updateBarberChart(data);
+            })
+            .catch(error => console.error('Error loading barber performance:', error));
+    }
+
+    hideLoading();
+}
+
+function updateRevenueChart(data) {
+    charts.revenue.data.labels = data.labels;
+    charts.revenue.data.datasets[0].data = data.data;
+    charts.revenue.update();
+}
+
+function updateBookingCharts(data) {
+    // Actualizar gráfico de días de la semana
+    charts.weekday.data.labels = data.weekday_distribution.map(item => item.day);
+    charts.weekday.data.datasets[0].data = data.weekday_distribution.map(item => item.count);
+    charts.weekday.update();
+
+    // Actualizar gráfico de estado
+    charts.status.data.labels = data.status_distribution.map(item => item.estado);
+    charts.status.data.datasets[0].data = data.status_distribution.map(item => item.count);
+    charts.status.update();
+
+    // Actualizar gráfico de horas pico
+    const peakHoursLabels = Object.keys(data.peak_hours);
+    const peakHoursData = Object.values(data.peak_hours);
+    
+    charts.peakHours.data.labels = peakHoursLabels;
+    charts.peakHours.data.datasets[0].data = peakHoursData;
+    charts.peakHours.update();
+}
+
+function updateBarberChart(data) {
+    if (!charts.barber) return;
+    
+    charts.barber.data.labels = data.barber_performance.map(item => item.barbero_name);
+    charts.barber.data.datasets[0].data = data.barber_performance.map(item => item.revenue);
+    charts.barber.update();
+}
+
+function showLoading() {
+    document.getElementById('loadingOverlay').classList.remove('d-none');
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').classList.add('d-none');
+}
+</script>
+{% endblock %}

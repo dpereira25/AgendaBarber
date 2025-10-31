@@ -56,13 +56,16 @@
                                     <li><a class="dropdown-item" href="{% url 'agenda_barbero' %}">
                                         <i class="fas fa-calendar-alt me-2"></i>Mi Agenda
                                     </a></li>
-                                    <li><a class="dropdown-item" href="#">
-                                        <i class="fas fa-chart-bar me-2"></i>Estadísticas
+                                    <li><a class="dropdown-item" href="{% url 'dashboard' %}">
+                                        <i class="fas fa-chart-bar me-2"></i>Panel Administrativo
                                     </a></li>
                                 {% endif %}
                                 
                                 {% if user.is_staff %}
                                     <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'dashboard' %}">
+                                        <i class="fas fa-chart-line me-2"></i>Panel Insights
+                                    </a></li>
                                     <li><a class="dropdown-item" href="/admin/">
                                         <i class="fas fa-cog me-2"></i>Administración
                                     </a></li>

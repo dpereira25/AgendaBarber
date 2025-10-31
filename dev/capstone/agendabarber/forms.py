@@ -1,23 +1,30 @@
 from django import forms
-from django.core.exceptions import ValidationError
 from django.utils import timezone
-from datetime import datetime, time, timedelta
-from .models import Barbero, Servicio, Reserva
+from datetime import datetime, timedelta, time, date
+from .models import Reserva, Servicio, Barbero
 
 class ReservaForm(forms.ModelForm):
+    """
+    Formulario para crear reservas
+    """
+    # Campos adicionales para fecha y hora separados
     fecha = forms.DateField(
         widget=forms.DateInput(attrs={
             'type': 'date',
-            'min': timezone.now().date().isoformat()
+            'class': 'form-control',
+            'min': date.today().isoformat()
         }),
-        label="Fecha"
+        label='Fecha de la reserva'
     )
-    hora = forms.ChoiceField(
-        choices=[],  # Se llenarán dinámicamente
-        widget=forms.Select(attrs={'class': 'form-select'}),
-        label="Hora"
+    
+    hora = forms.TimeField(
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'form-control'
+        }),
+        label='Hora de la reserva'
     )
-
+    
     class Meta:
         model = Reserva
         fields = ['barbero', 'servicio', 'fecha', 'hora']
@@ -25,85 +32,102 @@ class ReservaForm(forms.ModelForm):
             'barbero': forms.Select(attrs={'class': 'form-select'}),
             'servicio': forms.Select(attrs={'class': 'form-select'}),
         }
+        labels = {
+            'barbero': 'Selecciona tu barbero',
+            'servicio': 'Selecciona el servicio',
+        }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Agregar clases CSS a los campos
-        self.fields['fecha'].widget.attrs.update({'class': 'form-control'})
         
-        # Personalizar las opciones de servicio para incluir precios
-        servicios = Servicio.objects.all()
-        servicio_choices = [('', 'Selecciona un servicio')]
-        for servicio in servicios:
-            servicio_choices.append((servicio.id, f"{servicio.nombre} - ${servicio.precio:,}"))
-        self.fields['servicio'].choices = servicio_choices
+        # Configurar queryset para barberos activos
+        self.fields['barbero'].queryset = Barbero.objects.all()
+        self.fields['servicio'].queryset = Servicio.objects.all()
         
-        # Inicializar horas disponibles (se actualizarán con JavaScript)
-        # Para tests, incluir algunas horas básicas
-        horas_basicas = [('', 'Selecciona fecha y barbero primero')]
-        for hora in range(9, 22):  # 9:00 a 21:00
-            hora_str = f"{hora:02d}:00"
-            horas_basicas.append((hora_str, hora_str))
-        self.fields['hora'].choices = horas_basicas
-
+        # Hacer campos requeridos
+        self.fields['barbero'].required = True
+        self.fields['servicio'].required = True
+        self.fields['fecha'].required = True
+        self.fields['hora'].required = True
+    
     def clean_fecha(self):
-        """Solo validar domingos (fechas pasadas ya están bloqueadas por el widget)"""
+        """
+        Validar que la fecha no sea en el pasado
+        """
         fecha = self.cleaned_data.get('fecha')
-        if fecha and fecha.isoweekday() == 7:
-            raise ValidationError('La barbería está cerrada los domingos.')
+        if fecha and fecha < date.today():
+            raise forms.ValidationError('No puedes reservar en una fecha pasada.')
         return fecha
-
+    
     def clean_hora(self):
-        """Convertir la hora de string a time object"""
-        hora_str = self.cleaned_data.get('hora')
-        if hora_str:
-            try:
-                # Convertir "18:00" a time object
-                hora = datetime.strptime(hora_str, '%H:%M').time()
-                return hora
-            except ValueError:
-                raise ValidationError('Formato de hora inválido.')
-        return hora_str
-
+        """
+        Validar que la hora esté dentro del horario de trabajo
+        """
+        hora = self.cleaned_data.get('hora')
+        fecha = self.cleaned_data.get('fecha')
+        
+        if not hora:
+            return hora
+        
+        # Determinar horario según el día
+        if fecha:
+            dia_semana = fecha.isoweekday()
+            
+            if dia_semana == 7:  # Domingo
+                raise forms.ValidationError('No trabajamos los domingos.')
+            elif 1 <= dia_semana <= 5:  # Lunes a viernes
+                hora_inicio = time(18, 0)
+                hora_fin = time(21, 0)
+            elif dia_semana == 6:  # Sábado
+                hora_inicio = time(9, 0)
+                hora_fin = time(18, 0)
+            else:
+                raise forms.ValidationError('Día no válido.')
+            
+            if not (hora_inicio <= hora < hora_fin):
+                if dia_semana == 6:
+                    raise forms.ValidationError('Los sábados trabajamos de 9:00 a 18:00.')
+                else:
+                    raise forms.ValidationError('De lunes a viernes trabajamos de 18:00 a 21:00.')
+        
+        return hora
+    
     def clean(self):
-        """Validar horarios y disponibilidad"""
+        """
+        Validación general del formulario
+        """
         cleaned_data = super().clean()
         fecha = cleaned_data.get('fecha')
         hora = cleaned_data.get('hora')
         barbero = cleaned_data.get('barbero')
         servicio = cleaned_data.get('servicio')
         
-        if not all([fecha, hora, barbero, servicio]):
-            return cleaned_data
-        
-        # Crear datetime de la reserva
-        inicio_reserva = timezone.make_aware(datetime.combine(fecha, hora))
-        duracion = timedelta(minutes=servicio.duracion_minutos)
-        fin_reserva = inicio_reserva + duracion
-        
-        # Validar horarios según el día
-        dia_semana = fecha.isoweekday()
-        if 1 <= dia_semana <= 5:  # Lunes a viernes
-            if hora < time(18, 0) or hora >= time(21, 0):
-                raise ValidationError('Horario de lunes a viernes: 18:00 - 21:00')
-        elif dia_semana == 6:  # Sábado
-            if hora < time(9, 0) or hora >= time(18, 0):
-                raise ValidationError('Horario de sábados: 09:00 - 18:00')
-        
-        # Verificar solapamientos
-        solapamientos = Reserva.objects.filter(
-            barbero=barbero,
-            inicio__date=fecha,
-            estado__in=['Pendiente', 'Confirmada'],
-            inicio__lt=fin_reserva,
-            fin__gt=inicio_reserva
-        ).exists()
-        
-        if solapamientos:
-            raise ValidationError('Esta franja horaria ya está ocupada.')
-        
-        # Guardar valores calculados
-        cleaned_data['inicio_calculado'] = inicio_reserva
-        cleaned_data['fin_calculado'] = fin_reserva
+        if fecha and hora and barbero and servicio:
+            # Crear datetime para la reserva
+            inicio_datetime = timezone.make_aware(
+                datetime.combine(fecha, hora)
+            )
+            
+            # Calcular fin basado en la duración del servicio
+            fin_datetime = inicio_datetime + timedelta(minutes=servicio.duracion_minutos)
+            
+            # Verificar si ya existe una reserva en ese horario para ese barbero
+            reservas_existentes = Reserva.objects.filter(
+                barbero=barbero,
+                inicio__date=fecha,
+                estado__in=['Pendiente', 'Confirmada']
+            )
+            
+            for reserva in reservas_existentes:
+                # Verificar solapamiento
+                if (inicio_datetime < reserva.fin and fin_datetime > reserva.inicio):
+                    raise forms.ValidationError(
+                        f'El barbero {barbero.nombre} ya tiene una reserva en ese horario. '
+                        f'Reserva existente: {reserva.inicio.strftime("%H:%M")} - {reserva.fin.strftime("%H:%M")}'
+                    )
+            
+            # Agregar los valores calculados al cleaned_data
+            cleaned_data['inicio_calculado'] = inicio_datetime
+            cleaned_data['fin_calculado'] = fin_datetime
         
         return cleaned_data

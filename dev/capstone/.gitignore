@@ -24,3 +24,9 @@ static/
 
 # Sass
 .sass-cache/
+
+# Markdown files (documentation)
+*.md
+
+# Kiro specs and configuration
+.kiro/

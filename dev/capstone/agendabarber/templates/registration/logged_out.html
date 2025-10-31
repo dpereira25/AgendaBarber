@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Sesión Cerrada - Agenda Barber{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-body text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                </div>
+                <h2 class="card-title mb-3">¡Hasta pronto!</h2>
+                <p class="card-text text-muted mb-4">
+                    Has cerrado sesión exitosamente. Gracias por usar Agenda Barber.
+                </p>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <a href="{% url 'inicio' %}" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i>Volver al Inicio
+                    </a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

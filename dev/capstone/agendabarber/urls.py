@@ -27,7 +27,9 @@ urlpatterns = [
     # Acciones de reservas
     path('cancelar-reserva/', views.cancelar_reserva, name='cancelar_reserva'),
     
+    # Autenticación
     path('auth/registro/', views.registro_usuario, name='registro'),
+    path('auth/logout/', views.logout_usuario, name='logout'),
 ]
 
 # Configuración de archivos estáticos y media (fotos de barberos/servicios) en entorno de desarrollo

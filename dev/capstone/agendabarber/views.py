@@ -9,6 +9,7 @@ from django.db.models import Q
 # 💡 Nuevas importaciones para autenticación
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
 
 # ----------------------------------------------------------------------
 # REGLAS DE HORARIO FIJO (Se mantiene)
@@ -95,6 +96,14 @@ def registro_usuario(request):
         form = UserCreationForm()
         
     return render(request, 'registration/registro.html', {'form': form})
+
+def logout_usuario(request):
+    """
+    Vista personalizada para logout que redirije directamente
+    """
+    logout(request)
+    messages.success(request, '¡Has cerrado sesión exitosamente!')
+    return redirect('inicio')
 
 from django.http import JsonResponse
 from django.db.models import Q, Sum

@@ -201,21 +201,35 @@
 </div>
 {% endif %}
 
-<button class="btn btn-info mt-5" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling">Información importante</button>
+<!-- Botón centrado -->
+<div class="row">
+    <div class="col-12 text-center">
+        <button type="button" class="btn btn-info btn-lg" data-bs-toggle="modal" data-bs-target="#infoModal">
+            Información importante 💈
+        </button>
+    </div>
+</div>
 
-<div class="offcanvas offcanvas-start text-bg-dark" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
-    id="offcanvasScrolling" aria-labelledby="offcanvasScrollingLabel">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="offcanvasScrollingLabel">Conceptos que debes entender</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+<!-- Modal centrado -->
+<div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="infoModalLabel">Conceptos que debes entender</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p>Actualmente en internet hay muchos conceptos que te pueden dificultar la elección de tu corte de pelo, pero aquí te los explico de manera sencilla.</p>
+        <p><strong>FADE:</strong> “Fade” es literalmente “degradado” en inglés. Cuando dicen <em>high</em>, <em>medium</em> o <em>low</em>, se refieren a la altura del degradado.</p>
+        <p><strong>TEXTURA:</strong> Se refiere a crear irregularidades en la parte superior para dar movimiento y un aspecto más casual o “despeinado”.</p>
+        <p><strong>COMPRIMIDO:</strong> Hace referencia a qué tan estirado quieres el degradado: uno comprimido es corto y de alto impacto visual; uno estirado es más pulido.</p>
+        <p><strong>TERMINACIÓN:</strong> Puede ser redonda, cuadrada o en punta (V). No todos los degradados deben ser rapados, lo que permite patillas o terminaciones personalizadas.</p>
+        <p class="mt-3 text-center">💡 <em>Esperamos que esta información te ayude a elegir tu próximo estilo.</em></p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cerrar</button>
+      </div>
     </div>
-    <div class="offcanvas-body">
-        <p>Actualmente en internet hay muchos conceptos que te pueden dificultar la eleccion de tu corte de pelo pero aqui te los explico de manera sencilla.</p>
-        <p>FADE: Fade es literalmente degradado en ingles y cuando dicen high, medium o low, se refieren a la altura de este que se define que tan corto lo quieres.</p>
-        <p>TEXTURA: Se refiere a crear irregularidades en la parte superior para crear movimiento en el pelo y dar un aspecto "despeinado" o mas casual.</p>
-        <p>COMPRIMIDO: Hace referencia a que tan estirado quieres el degradado, un degradado comprimido ocupara muy poco espacio pero tendra un mayor impacto visual, en cambio uno muy estirado se vera muy pulido pero con menor impacto.</p>
-        <p>TERMINACION: Un degradado tradicional puede tener terminacion redonda o en punta (tambien conocida como en V), no siempre un degradado ser rapado o con la 0, lo que permite tener patillas en punta o cuadradas y la parte posterior redonda o cuadrada.</p>
-        <p>ESPERO SEA UTIL ESTA INFORMACION</p>
-    </div>
+  </div>
 </div>
 {% endblock %}
