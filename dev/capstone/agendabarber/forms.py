@@ -17,12 +17,13 @@ class ReservaForm(forms.ModelForm):
         label='Fecha de la reserva'
     )
     
-    hora = forms.TimeField(
-        widget=forms.TimeInput(attrs={
-            'type': 'time',
-            'class': 'form-control'
+    hora = forms.CharField(
+        max_length=5,
+        widget=forms.HiddenInput(attrs={
+            'id': 'id_hora_hidden'
         }),
-        label='Hora de la reserva'
+        label='Hora de la reserva',
+        required=True
     )
     
     class Meta:
@@ -61,36 +62,20 @@ class ReservaForm(forms.ModelForm):
     
     def clean_hora(self):
         """
-        Validar que la hora esté dentro del horario de trabajo
+        Validar que la hora tenga el formato correcto
         """
-        hora = self.cleaned_data.get('hora')
-        fecha = self.cleaned_data.get('fecha')
+        hora_str = self.cleaned_data.get('hora')
         
-        if not hora:
-            return hora
+        if not hora_str:
+            raise forms.ValidationError('Debes seleccionar una hora.')
         
-        # Determinar horario según el día
-        if fecha:
-            dia_semana = fecha.isoweekday()
-            
-            if dia_semana == 7:  # Domingo
-                raise forms.ValidationError('No trabajamos los domingos.')
-            elif 1 <= dia_semana <= 5:  # Lunes a viernes
-                hora_inicio = time(18, 0)
-                hora_fin = time(21, 0)
-            elif dia_semana == 6:  # Sábado
-                hora_inicio = time(9, 0)
-                hora_fin = time(18, 0)
-            else:
-                raise forms.ValidationError('Día no válido.')
-            
-            if not (hora_inicio <= hora < hora_fin):
-                if dia_semana == 6:
-                    raise forms.ValidationError('Los sábados trabajamos de 9:00 a 18:00.')
-                else:
-                    raise forms.ValidationError('De lunes a viernes trabajamos de 18:00 a 21:00.')
+        try:
+            # Validar formato de hora
+            datetime.strptime(hora_str, '%H:%M')
+        except ValueError:
+            raise forms.ValidationError('Formato de hora inválido.')
         
-        return hora
+        return hora_str
     
     def clean(self):
         """
@@ -103,28 +88,59 @@ class ReservaForm(forms.ModelForm):
         servicio = cleaned_data.get('servicio')
         
         if fecha and hora and barbero and servicio:
+            # Convertir hora string a time object
+            try:
+                hora_obj = datetime.strptime(hora, '%H:%M').time()
+            except ValueError:
+                raise forms.ValidationError('Formato de hora inválido.')
+            
+            # Verificar que la hora esté dentro del horario del barbero
+            from .models import HorarioTrabajo
+            dia_semana = fecha.isoweekday()
+            
+            # Verificar horario del barbero
+            try:
+                horario = HorarioTrabajo.objects.get(barbero=barbero, dia_semana=dia_semana)
+                hora_inicio = horario.hora_inicio
+                hora_fin = horario.hora_fin
+            except HorarioTrabajo.DoesNotExist:
+                # Usar horario por defecto
+                if dia_semana == 7:  # Domingo
+                    raise forms.ValidationError('No trabajamos los domingos.')
+                elif 1 <= dia_semana <= 5:  # Lunes a viernes
+                    hora_inicio = time(18, 0)
+                    hora_fin = time(21, 0)
+                elif dia_semana == 6:  # Sábado
+                    hora_inicio = time(9, 0)
+                    hora_fin = time(18, 0)
+            
+            # Verificar que la hora esté dentro del rango de trabajo
+            if not (hora_inicio <= hora_obj < hora_fin):
+                raise forms.ValidationError(f'La hora seleccionada está fuera del horario de trabajo.')
+            
             # Crear datetime para la reserva
             inicio_datetime = timezone.make_aware(
-                datetime.combine(fecha, hora)
+                datetime.combine(fecha, hora_obj)
             )
             
             # Calcular fin basado en la duración del servicio
             fin_datetime = inicio_datetime + timedelta(minutes=servicio.duracion_minutos)
             
-            # Verificar si ya existe una reserva en ese horario para ese barbero
-            reservas_existentes = Reserva.objects.filter(
+            # Verificar disponibilidad usando la misma lógica que la API
+            fin_slot = inicio_datetime + timedelta(hours=1)
+            
+            ocupado = Reserva.objects.filter(
                 barbero=barbero,
                 inicio__date=fecha,
-                estado__in=['Pendiente', 'Confirmada']
-            )
+                estado__in=['Pendiente', 'Confirmada'],
+                inicio__lt=fin_slot,
+                fin__gt=inicio_datetime
+            ).exists()
             
-            for reserva in reservas_existentes:
-                # Verificar solapamiento
-                if (inicio_datetime < reserva.fin and fin_datetime > reserva.inicio):
-                    raise forms.ValidationError(
-                        f'El barbero {barbero.nombre} ya tiene una reserva en ese horario. '
-                        f'Reserva existente: {reserva.inicio.strftime("%H:%M")} - {reserva.fin.strftime("%H:%M")}'
-                    )
+            if ocupado:
+                raise forms.ValidationError(
+                    f'La hora seleccionada ya no está disponible. Por favor selecciona otra hora.'
+                )
             
             # Agregar los valores calculados al cleaned_data
             cleaned_data['inicio_calculado'] = inicio_datetime

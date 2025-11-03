@@ -20,6 +20,9 @@ urlpatterns = [
     # Vista AJAX para obtener horas disponibles
     path('api/horas-disponibles/', views.obtener_horas_disponibles, name='horas_disponibles'),
     
+    # Vista AJAX para obtener información del servicio
+    path('api/info-servicio/', views.obtener_info_servicio, name='info_servicio'),
+    
     # Vistas de reservas
     path('mis-reservas/', views.mis_reservas_cliente, name='mis_reservas'),
     path('agenda-barbero/', views.agenda_barbero, name='agenda_barbero'),

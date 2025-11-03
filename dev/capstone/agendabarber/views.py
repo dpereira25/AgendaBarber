@@ -211,25 +211,39 @@ def obtener_horas_disponibles(request):
         except (ValueError, Barbero.DoesNotExist):
             return JsonResponse({'horas': []})
         
-        # Determinar horario según el día
+        # Obtener horario del barbero para ese día
+        from .models import HorarioTrabajo
         dia_semana = fecha.isoweekday()
-        if 1 <= dia_semana <= 5:  # Lunes a viernes
-            hora_inicio = time(18, 0)
-            hora_fin = time(21, 0)
-        elif dia_semana == 6:  # Sábado
-            hora_inicio = time(9, 0)
-            hora_fin = time(18, 0)
-        else:  # Domingo
-            return JsonResponse({'horas': []})
         
-        # Generar horas disponibles (cada hora)
+        try:
+            horario = HorarioTrabajo.objects.get(barbero=barbero, dia_semana=dia_semana)
+            hora_inicio = horario.hora_inicio
+            hora_fin = horario.hora_fin
+        except HorarioTrabajo.DoesNotExist:
+            # Si no hay horario específico, usar horario por defecto
+            if 1 <= dia_semana <= 5:  # Lunes a viernes
+                hora_inicio = time(18, 0)
+                hora_fin = time(21, 0)
+            elif dia_semana == 6:  # Sábado
+                hora_inicio = time(9, 0)
+                hora_fin = time(18, 0)
+            else:  # Domingo
+                return JsonResponse({'horas': []})
+        
+        # Generar horas disponibles (cada hora completa)
         horas_disponibles = []
-        hora_actual = hora_inicio
         
-        while hora_actual < hora_fin:
+        # Convertir a datetime para poder hacer operaciones
+        datetime_inicio = datetime.combine(fecha, hora_inicio)
+        datetime_fin = datetime.combine(fecha, hora_fin)
+        
+        # Generar horas en intervalos de 1 hora
+        hora_actual = datetime_inicio
+        
+        while hora_actual < datetime_fin:
             # Verificar si esta hora está ocupada
-            inicio_slot = timezone.make_aware(datetime.combine(fecha, hora_actual))
-            fin_slot = inicio_slot + timedelta(hours=1)
+            inicio_slot = timezone.make_aware(hora_actual)
+            fin_slot = inicio_slot + timedelta(hours=1)  # Slots de 1 hora
             
             ocupado = Reserva.objects.filter(
                 barbero=barbero,
@@ -241,16 +255,37 @@ def obtener_horas_disponibles(request):
             
             if not ocupado:
                 horas_disponibles.append({
-                    'value': hora_actual.strftime('%H:%M'),
-                    'text': hora_actual.strftime('%H:%M')
+                    'value': hora_actual.time().strftime('%H:%M'),
+                    'text': hora_actual.time().strftime('%H:%M')
                 })
             
-            # Avanzar una hora
-            hora_actual = (datetime.combine(fecha, hora_actual) + timedelta(hours=1)).time()
+            # Avanzar 1 hora
+            hora_actual += timedelta(hours=1)
         
         return JsonResponse({'horas': horas_disponibles})
     
     return JsonResponse({'horas': []})
+
+def obtener_info_servicio(request):
+    """Vista AJAX para obtener información del servicio (precio y duración)"""
+    if request.method == 'GET':
+        servicio_id = request.GET.get('servicio_id')
+        
+        if not servicio_id:
+            return JsonResponse({'error': 'ID de servicio requerido'})
+        
+        try:
+            servicio = Servicio.objects.get(id=servicio_id)
+            return JsonResponse({
+                'precio': servicio.precio,
+                'duracion': servicio.duracion_minutos,
+                'nombre': servicio.nombre,
+                'descripcion': servicio.descripcion
+            })
+        except Servicio.DoesNotExist:
+            return JsonResponse({'error': 'Servicio no encontrado'})
+    
+    return JsonResponse({'error': 'Método no permitido'})
 
 @require_POST
 @login_required
