@@ -68,19 +68,19 @@ def dashboard(request):
         barbero_id=barbero_id
     )
     
-    # Top 5 servicios más populares (tu código original adaptado)
+    # Top 5 servicios más populares (corregido)
     top_servicios_query = Servicio.objects.annotate(
         total=Count('reserva', filter=Q(
             reserva__inicio__date__gte=start_date,
+            reserva__inicio__date__lte=end_date,
+            reserva__barbero_id=barbero_id  # Incluir filtro de barbero en la anotación
+        ) if start_date and end_date and barbero_id else Q(
+            reserva__inicio__date__gte=start_date,
             reserva__inicio__date__lte=end_date
-        ) if start_date and end_date else Q())
-    ).order_by('-total')[:5]
-    
-    # Si es barbero específico, filtrar por sus reservas
-    if barbero_id:
-        top_servicios_query = top_servicios_query.filter(
+        ) if start_date and end_date else Q(
             reserva__barbero_id=barbero_id
-        )
+        ) if barbero_id else Q())
+    ).order_by('-total')[:5]
     
     top_servicios = list(top_servicios_query)
     
@@ -139,10 +139,8 @@ def revenue_data_api(request):
     current_date = start_date
     
     while current_date <= end_date:
-        revenue = Reserva.objects.filter(
-            inicio__date=current_date,
-            estado='Completada',
-            pagado=True
+        revenue = Reserva.objects.ingresos_reales().filter(
+            inicio__date=current_date
         )
         
         if barbero_id:

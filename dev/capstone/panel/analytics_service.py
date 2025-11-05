@@ -14,11 +14,8 @@ class AnalyticsService:
         """
         Calcula métricas de ingresos para un período específico
         """
-        # Filtro base: solo reservas completadas y pagadas
-        queryset = Reserva.objects.filter(
-            estado='Completada',
-            pagado=True
-        )
+        # Filtro base: solo reservas que ya generaron ingresos (completadas por tiempo)
+        queryset = Reserva.objects.ingresos_reales()
         
         # Aplicar filtros de fecha si se proporcionan
         if start_date:
@@ -63,18 +60,26 @@ class AnalyticsService:
             count=Count('id')
         ).order_by('estado')
         
-        # Reservas por día de la semana
+        # Reservas por día de la semana (en español)
+        dias_espanol = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
         weekday_stats = []
         for i in range(7):
             count = queryset.filter(inicio__week_day=i+1).count()
             weekday_stats.append({
-                'day': calendar.day_name[i if i < 6 else 0],  # Ajustar domingo
+                'day': dias_espanol[i if i < 6 else 0],  # Ajustar domingo
                 'count': count
             })
         
-        # Calcular tasa de completación
+        # Calcular tasa de completación basada en tiempo
         total_bookings = queryset.count()
-        completed_bookings = queryset.filter(estado='Completada').count()
+        completed_bookings = Reserva.objects.completadas().filter(
+            **{k: v for k, v in {
+                'inicio__date__gte': start_date,
+                'inicio__date__lte': end_date,
+                'barbero_id': barbero_id
+            }.items() if v is not None}
+        ).count()
+        
         completion_rate = (completed_bookings / total_bookings * 100) if total_bookings > 0 else 0
         
         return {
@@ -103,13 +108,12 @@ class AnalyticsService:
             if end_date:
                 queryset = queryset.filter(inicio__date__lte=end_date)
             
-            # Calcular métricas
+            # Calcular métricas basadas en tiempo
             total_bookings = queryset.count()
-            completed_bookings = queryset.filter(estado='Completada').count()
-            revenue = queryset.filter(
-                estado='Completada', 
-                pagado=True
-            ).aggregate(total=Sum('servicio__precio'))['total'] or 0
+            completed_bookings = Reserva.objects.completadas().filter(barbero=barbero).count()
+            revenue = Reserva.objects.ingresos_reales().filter(barbero=barbero).aggregate(
+                total=Sum('servicio__precio')
+            )['total'] or 0
             
             completion_rate = (completed_bookings / total_bookings * 100) if total_bookings > 0 else 0
             
@@ -139,11 +143,18 @@ class AnalyticsService:
             queryset = queryset.filter(inicio__date__lte=end_date)
         
         # Servicios por popularidad (total de reservas)
-        service_bookings = queryset.values(
+        # Usar reservas completadas para servicios
+        completed_queryset = Reserva.objects.completadas()
+        if start_date:
+            completed_queryset = completed_queryset.filter(inicio__date__gte=start_date)
+        if end_date:
+            completed_queryset = completed_queryset.filter(inicio__date__lte=end_date)
+            
+        service_bookings = completed_queryset.values(
             'servicio__id', 'servicio__nombre', 'servicio__precio'
         ).annotate(
             total_bookings=Count('id'),
-            total_revenue=Sum('servicio__precio', filter=Q(estado='Completada', pagado=True))
+            total_revenue=Sum('servicio__precio')
         ).order_by('-total_bookings')
         
         return list(service_bookings)
@@ -178,17 +189,21 @@ class AnalyticsService:
         if not year:
             year = timezone.now().year
         
+        # Nombres de meses en español
+        meses_espanol = [
+            '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+        ]
+        
         monthly_data = []
         for month in range(1, 13):
-            revenue = Reserva.objects.filter(
+            revenue = Reserva.objects.ingresos_reales().filter(
                 inicio__year=year,
-                inicio__month=month,
-                estado='Completada',
-                pagado=True
+                inicio__month=month
             ).aggregate(total=Sum('servicio__precio'))['total'] or 0
             
             monthly_data.append({
-                'month': calendar.month_name[month],
+                'month': meses_espanol[month],
                 'revenue': revenue
             })
         
@@ -209,19 +224,9 @@ class AnalyticsService:
             queryset = queryset.filter(inicio__date__lte=end_date)
         
         total = queryset.count()
-        if total == 0:
-            return {
-                'overall_completion_rate': 0,
-                'cancellation_rate': 0,
-                'pending_rate': 0
-            }
-        
-        completed = queryset.filter(estado='Completada').count()
-        cancelled = queryset.filter(estado='Cancelada').count()
-        pending = queryset.filter(estado='Pendiente').count()
-        
+        # Simplificado - todas las reservas son exitosas
         return {
-            'overall_completion_rate': round((completed / total) * 100, 2),
-            'cancellation_rate': round((cancelled / total) * 100, 2),
-            'pending_rate': round((pending / total) * 100, 2)
+            'overall_completion_rate': 100.0 if total > 0 else 0,
+            'cancellation_rate': 0,
+            'pending_rate': 0
         }

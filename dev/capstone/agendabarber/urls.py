@@ -18,10 +18,12 @@ urlpatterns = [
     path('reservar/confirmacion/', views.confirmacionReserva, name='confirmacion_reserva'),
     
     # Vista AJAX para obtener horas disponibles
-    path('api/horas-disponibles/', views.obtener_horas_disponibles, name='horas_disponibles'),
+    path('horas-disponibles/', views.obtener_horas_disponibles_unified, name='horas_disponibles'),
     
     # Vista AJAX para obtener información del servicio
-    path('api/info-servicio/', views.obtener_info_servicio, name='info_servicio'),
+    path('info-servicio/', views.obtener_info_servicio, name='info_servicio'),
+    
+
     
     # Vistas de reservas
     path('mis-reservas/', views.mis_reservas_cliente, name='mis_reservas'),

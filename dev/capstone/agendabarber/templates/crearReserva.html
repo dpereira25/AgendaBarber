@@ -121,7 +121,34 @@
     </div>
 </div>
 
-<!-- JavaScript externo para validaciones y funcionalidad AJAX -->
-<script src="{% static 'agendabarber/js/reserva-validation.js' %}"></script>
+<!-- JavaScript de validación de reservas -->
+<script src="{% static 'agendabarber/js/reserva-validation.js' %}?v=2.0"></script>
+
+<!-- Test adicional para verificar carga -->
+<script>
+console.log('🔍 Verificando carga de JavaScript...');
+setTimeout(function() {
+    console.log('⏰ Verificación después de 1 segundo');
+    const elementos = {
+        fecha: document.getElementById('id_fecha'),
+        barbero: document.getElementById('id_barbero'),
+        servicio: document.getElementById('id_servicio'),
+        horaSelect: document.getElementById('id_hora_select'),
+        horaHidden: document.getElementById('id_hora_hidden'),
+        servicioInfo: document.getElementById('servicio-info'),
+        horarioSugerencia: document.getElementById('horario-sugerencia')
+    };
+    
+    console.log('📋 Estado de elementos:', elementos);
+    
+    Object.keys(elementos).forEach(key => {
+        if (!elementos[key]) {
+            console.error(`❌ Elemento ${key} no encontrado`);
+        } else {
+            console.log(`✅ Elemento ${key} encontrado`);
+        }
+    });
+}, 1000);
+</script>
 
 {% endblock %}

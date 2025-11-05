@@ -1,21 +1,19 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from .forms import ReservaForm
-from .models import Reserva, Servicio, Barbero 
-from datetime import timedelta, datetime, time
+from .models import Reserva, Servicio, Barbero, HorarioTrabajo 
+from datetime import timedelta, datetime, time, date
 from django.utils import timezone
-from django.db.models import Q 
+import json 
 
 # 💡 Nuevas importaciones para autenticación
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 
-# ----------------------------------------------------------------------
-# REGLAS DE HORARIO FIJO (Se mantiene)
-# ----------------------------------------------------------------------
-HORARIO_SEMANAL = {'inicio': time(18, 0), 'fin': time(21, 0)} 
-HORARIO_SABADO = {'inicio': time(9, 0), 'fin': time(18, 0)}
+
 
 # ----------------------------------------------------------------------
 # FUNCIONES DE NAVEGACIÓN (Se mantienen)
@@ -34,17 +32,15 @@ def cargarInicio(request):
     
     # Información personalizada según el tipo de usuario
     if request.user.is_authenticated:
-        from datetime import date, datetime, timedelta
         hoy = date.today()
         
         # Verificar si es barbero
         try:
             barbero = Barbero.objects.get(usuario=request.user)
-            # Es barbero - mostrar reservas pendientes del día
+            # Es barbero - mostrar todas las reservas del día (simplificado)
             reservas_hoy = Reserva.objects.filter(
                 barbero=barbero,
-                inicio__date=hoy,
-                estado='Pendiente'
+                inicio__date=hoy
             ).select_related('cliente', 'servicio').order_by('inicio')
             
             context.update({
@@ -105,22 +101,6 @@ def logout_usuario(request):
     messages.success(request, '¡Has cerrado sesión exitosamente!')
     return redirect('inicio')
 
-from django.http import JsonResponse
-from django.db.models import Q, Sum
-from django.db import models
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
-import json
-
-def es_barbero(user):
-    """Función helper para verificar si un usuario es barbero"""
-    if not user.is_authenticated:
-        return False
-    try:
-        Barbero.objects.get(usuario=user)
-        return True
-    except Barbero.DoesNotExist:
-        return False
 
 def mis_reservas_cliente(request):
     """Vista para que los clientes vean sus reservas"""
@@ -166,7 +146,6 @@ def agenda_barbero(request):
     ).select_related('cliente', 'servicio').order_by('-inicio')
     
     # Estadísticas
-    from datetime import date
     hoy = date.today()
     
     reservas_hoy = reservas.filter(inicio__date=hoy).count()
@@ -174,7 +153,6 @@ def agenda_barbero(request):
     reservas_confirmadas = reservas.filter(estado='Confirmada').count()
     
     # Ingresos del mes (solo reservas completadas y pagadas)
-    from datetime import datetime
     primer_dia_mes = hoy.replace(day=1)
     ingresos_mes = reservas.filter(
         inicio__date__gte=primer_dia_mes,
@@ -196,75 +174,7 @@ def agenda_barbero(request):
     
     return render(request, 'agenda_barbero.html', context)
 
-def obtener_horas_disponibles(request):
-    """Vista AJAX para obtener horas disponibles según fecha y barbero"""
-    if request.method == 'GET':
-        fecha_str = request.GET.get('fecha')
-        barbero_id = request.GET.get('barbero')
-        
-        if not fecha_str or not barbero_id:
-            return JsonResponse({'horas': []})
-        
-        try:
-            fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
-            barbero = Barbero.objects.get(id=barbero_id)
-        except (ValueError, Barbero.DoesNotExist):
-            return JsonResponse({'horas': []})
-        
-        # Obtener horario del barbero para ese día
-        from .models import HorarioTrabajo
-        dia_semana = fecha.isoweekday()
-        
-        try:
-            horario = HorarioTrabajo.objects.get(barbero=barbero, dia_semana=dia_semana)
-            hora_inicio = horario.hora_inicio
-            hora_fin = horario.hora_fin
-        except HorarioTrabajo.DoesNotExist:
-            # Si no hay horario específico, usar horario por defecto
-            if 1 <= dia_semana <= 5:  # Lunes a viernes
-                hora_inicio = time(18, 0)
-                hora_fin = time(21, 0)
-            elif dia_semana == 6:  # Sábado
-                hora_inicio = time(9, 0)
-                hora_fin = time(18, 0)
-            else:  # Domingo
-                return JsonResponse({'horas': []})
-        
-        # Generar horas disponibles (cada hora completa)
-        horas_disponibles = []
-        
-        # Convertir a datetime para poder hacer operaciones
-        datetime_inicio = datetime.combine(fecha, hora_inicio)
-        datetime_fin = datetime.combine(fecha, hora_fin)
-        
-        # Generar horas en intervalos de 1 hora
-        hora_actual = datetime_inicio
-        
-        while hora_actual < datetime_fin:
-            # Verificar si esta hora está ocupada
-            inicio_slot = timezone.make_aware(hora_actual)
-            fin_slot = inicio_slot + timedelta(hours=1)  # Slots de 1 hora
-            
-            ocupado = Reserva.objects.filter(
-                barbero=barbero,
-                inicio__date=fecha,
-                estado__in=['Pendiente', 'Confirmada'],
-                inicio__lt=fin_slot,
-                fin__gt=inicio_slot
-            ).exists()
-            
-            if not ocupado:
-                horas_disponibles.append({
-                    'value': hora_actual.time().strftime('%H:%M'),
-                    'text': hora_actual.time().strftime('%H:%M')
-                })
-            
-            # Avanzar 1 hora
-            hora_actual += timedelta(hours=1)
-        
-        return JsonResponse({'horas': horas_disponibles})
-    
-    return JsonResponse({'horas': []})
+
 
 def obtener_info_servicio(request):
     """Vista AJAX para obtener información del servicio (precio y duración)"""
@@ -286,6 +196,91 @@ def obtener_info_servicio(request):
             return JsonResponse({'error': 'Servicio no encontrado'})
     
     return JsonResponse({'error': 'Método no permitido'})
+
+
+
+
+
+def obtener_horas_disponibles_unified(request):
+    """Vista unificada para obtener horas disponibles (compatible con ambos frontends)"""
+    if request.method == 'GET':
+        fecha_str = request.GET.get('fecha')
+        barbero_id = request.GET.get('barbero')
+        formato = request.GET.get('formato', 'simple')  # 'simple' o 'completo'
+        
+        if not fecha_str or not barbero_id:
+            return JsonResponse({'horas': []})
+        
+        try:
+            fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            barbero = Barbero.objects.get(id=barbero_id)
+        except (ValueError, Barbero.DoesNotExist):
+            return JsonResponse({'horas': []})
+        
+        # Obtener horario del barbero para ese día
+        dia_semana = fecha.isoweekday()
+        
+        try:
+            horario = HorarioTrabajo.objects.get(barbero=barbero, dia_semana=dia_semana)
+            hora_inicio = horario.hora_inicio
+            hora_fin = horario.hora_fin
+        except HorarioTrabajo.DoesNotExist:
+            # Usar horario por defecto
+            if 1 <= dia_semana <= 5:  # Lunes a viernes
+                hora_inicio = time(18, 0)
+                hora_fin = time(21, 0)
+            elif dia_semana == 6:  # Sábado
+                hora_inicio = time(9, 0)
+                hora_fin = time(18, 0)
+            else:  # Domingo
+                return JsonResponse({'horas': []})
+        
+        # Generar horas disponibles (cada hora completa)
+        horas_disponibles = []
+        datetime_inicio = datetime.combine(fecha, hora_inicio)
+        datetime_fin = datetime.combine(fecha, hora_fin)
+        
+        hora_actual = datetime_inicio
+        while hora_actual < datetime_fin:
+            # Verificar si esta hora está ocupada
+            inicio_slot = timezone.make_aware(hora_actual)
+            fin_slot = inicio_slot + timedelta(hours=1)
+            
+            ocupado = Reserva.objects.filter(
+                barbero=barbero,
+                inicio__date=fecha,
+                estado__in=['Pendiente', 'Confirmada'],
+                inicio__lt=fin_slot,
+                fin__gt=inicio_slot
+            ).exists()
+            
+            if not ocupado:
+                hora_data = {
+                    'value': hora_actual.time().strftime('%H:%M'),
+                    'text': hora_actual.time().strftime('%H:%M')
+                }
+                
+                # Agregar información adicional para formato completo (frontend moderno)
+                if formato == 'completo':
+                    hora_data['datetime'] = inicio_slot.isoformat()
+                
+                horas_disponibles.append(hora_data)
+            
+            # Avanzar 1 hora
+            hora_actual += timedelta(hours=1)
+        
+        # Formato de respuesta según el tipo de frontend
+        if formato == 'completo':
+            return JsonResponse({
+                'fecha': fecha_str,
+                'barbero': barbero.nombre,
+                'horas': horas_disponibles
+            })
+        else:
+            # Formato simple para templates Django
+            return JsonResponse({'horas': horas_disponibles})
+    
+    return JsonResponse({'horas': []})
 
 @require_POST
 @login_required
@@ -340,7 +335,6 @@ def cancelar_reserva(request):
             })
         
         # Verificar tiempo límite (opcional: no cancelar si falta menos de 2 horas)
-        from datetime import timedelta
         tiempo_limite = timezone.now() + timedelta(hours=2)
         
         if reserva.inicio <= tiempo_limite:

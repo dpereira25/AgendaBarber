@@ -1,0 +1,83 @@
+@font-face {
+    font-family: miFuente;
+    /* Asegúrate de que la ruta 'fonts/Roboto-Regular.ttf' sea correcta */
+    src: url('fonts/Roboto-Regular.ttf') format('truetype');
+}
+
+/* ------------------------------------------------ */
+/* ESTILOS GLOBALES Y NAVBAR                        */
+/* ------------------------------------------------ */
+body {
+    font-family: miFuente, sans-serif;
+    background-color: #f7f7f7;
+    color: #212529;
+}
+.navbar {
+    border-bottom: 3px solid #f05959;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+.nav-link {
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+.nav-link:hover {
+    color: #4a3580 !important;
+}
+
+/* ------------------------------------------------ */
+/* ESTILOS GLOBALES DE TARJETA (Catálogo y Home)    */
+/* ------------------------------------------------ */
+
+/* Aplica el estilo base, sombra y transiciones a CUALQUIER .card */
+.card {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra base */
+    border: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Transición para hover */
+    overflow: hidden; 
+}
+
+/* Efecto de Elevación (Hover) */
+.card:hover {
+    transform: translateY(-5px); /* Levanta la tarjeta ligeramente */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25); /* Sombra más fuerte */
+}
+
+/* Estilos de Botones y Texto dentro de la Tarjeta */
+.card-footer .btn-dark {
+    background-color: #212529;
+    border-color: #212529;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.card-body .text-primary {
+    color: #495057 !important;
+    font-weight: 600;
+}
+
+/* ------------------------------------------------ */
+/* ESTILOS EXCLUSIVOS DE SCROLL HORIZONTAL (Home)   */
+/* ------------------------------------------------ */
+.scrollable-cards-container {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 15px;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+.scrollable-cards-container::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollable-cards-container .card-feature {
+    flex: 0 0 80%;
+    min-width: 300px;
+    margin-right: 15px;
+}
+
+/* Responsive: 3 tarjetas visibles en desktop */
+@media (min-width: 768px) {
+    .scrollable-cards-container .card-feature {
+        flex: 0 0 30%;
+    }
+}
