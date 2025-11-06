@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 {% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'agendabarber/css/enhanced-booking.css' %}">
+{% endblock %}
+
 {% block content %}
 
 <div class="container my-5">
@@ -10,6 +15,11 @@
                     <h3 class="mb-0"><i class="fas fa-calendar-plus me-2"></i>Nueva Reserva</h3>
                 </div>
                 <div class="card-body">
+                    <!-- Progress indicator -->
+                    <div class="progress mb-4" style="height: 6px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 25%" id="booking-progress"></div>
+                    </div>
+
                     {% if messages %}
                     {% for message in messages %}
                     <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
@@ -31,57 +41,166 @@
                     <form method="post" id="reservaForm">
                         {% csrf_token %}
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-user-tie me-1"></i>{{ form.barbero.label }}
-                                </label>
-                                {{ form.barbero }}
-                                {% if form.barbero.errors %}
-                                <div class="text-danger small mt-1">{{ form.barbero.errors.0 }}</div>
-                                {% endif %}
-                            </div>
+                        <!-- Step 1: Barber and Service Selection -->
+                        <div class="booking-step" id="step-1">
+                            <div class="row">
+                                <div class="col-12 mb-4">
+                                    <div class="form-group-enhanced">
+                                        <label class="form-label fw-bold mb-3">
+                                            <i class="fas fa-user-tie me-2 text-primary"></i>{{ form.barbero.label }}
+                                            <span class="step-indicator">1</span>
+                                        </label>
+                                        
+                                        <!-- Hidden select for form submission -->
+                                        <div style="display: none;">{{ form.barbero }}</div>
+                                        
+                                        <!-- Custom barber cards -->
+                                        <div class="barber-cards-container" id="barber-cards" role="radiogroup" aria-label="Seleccionar barbero">
+                                            {% for barbero in form.barbero.field.queryset %}
+                                            <div class="barber-card" 
+                                                 data-barbero-id="{{ barbero.id }}" 
+                                                 onclick="selectBarber({{ barbero.id }})"
+                                                 onkeydown="handleCardKeydown(event, {{ barbero.id }}, 'barber')"
+                                                 tabindex="0"
+                                                 role="radio"
+                                                 aria-checked="false"
+                                                 aria-label="Barbero {{ barbero.nombre }}, {{ barbero.experiencia }} años de experiencia">
+                                                <div class="barber-card-image">
+                                                    {% if barbero.foto %}
+                                                        <img src="{{ barbero.foto.url }}" alt="{{ barbero.nombre }}" class="barber-photo">
+                                                    {% else %}
+                                                        <div class="barber-photo-placeholder">
+                                                            <i class="fas fa-user-tie"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <div class="barber-card-overlay">
+                                                        <i class="fas fa-check-circle check-icon"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="barber-card-info">
+                                                    <h6 class="barber-name">{{ barbero.nombre }}</h6>
+                                                    <p class="barber-experience">{{ barbero.experiencia }} años de experiencia</p>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        
+                                        {% if form.barbero.errors %}
+                                        <div class="text-danger small mt-1 animated-error">{{ form.barbero.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-check-icon" id="barbero-check" style="display: none;">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        </div>
+                                    </div>
+                                </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-cut me-1"></i>{{ form.servicio.label }}
-                                </label>
-                                {{ form.servicio }}
-                                {% if form.servicio.errors %}
-                                <div class="text-danger small mt-1">{{ form.servicio.errors.0 }}</div>
-                                {% endif %}
-                                <div id="servicio-info" class="mt-2"></div>
+                                <div class="col-12 mb-4">
+                                    <div class="form-group-enhanced">
+                                        <label class="form-label fw-bold mb-3">
+                                            <i class="fas fa-cut me-2 text-primary"></i>{{ form.servicio.label }}
+                                            <span class="step-indicator">2</span>
+                                        </label>
+                                        
+                                        <!-- Hidden select for form submission -->
+                                        <div style="display: none;">{{ form.servicio }}</div>
+                                        
+                                        <!-- Custom service cards -->
+                                        <div class="service-cards-container" id="service-cards" role="radiogroup" aria-label="Seleccionar servicio">
+                                            {% for servicio in form.servicio.field.queryset %}
+                                            <div class="service-card" 
+                                                 data-service-id="{{ servicio.id }}" 
+                                                 onclick="selectService({{ servicio.id }})"
+                                                 onkeydown="handleCardKeydown(event, {{ servicio.id }}, 'service')"
+                                                 tabindex="0"
+                                                 role="radio"
+                                                 aria-checked="false"
+                                                 aria-label="Servicio {{ servicio.nombre }}, ${{ servicio.precio|floatformat:0 }}, {{ servicio.duracion_minutos }} minutos">
+                                                <div class="service-card-header">
+                                                    <h6 class="service-name">{{ servicio.nombre }}</h6>
+                                                    <span class="service-price">${{ servicio.precio|floatformat:0 }}</span>
+                                                </div>
+                                                <div class="service-duration">
+                                                    <i class="fas fa-clock"></i>
+                                                    <span>{{ servicio.duracion_minutos }} minutos</span>
+                                                </div>
+                                                {% if servicio.descripcion %}
+                                                <p class="service-description">{{ servicio.descripcion|truncatewords:10 }}</p>
+                                                {% endif %}
+                                                <div class="service-card-overlay">
+                                                    <i class="fas fa-check-circle check-icon"></i>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        
+                                        {% if form.servicio.errors %}
+                                        <div class="text-danger small mt-1 animated-error">{{ form.servicio.errors.0 }}</div>
+                                        {% endif %}
+                                        <div id="servicio-info" class="mt-2 service-info-container"></div>
+                                        <div class="form-check-icon" id="servicio-check" style="display: none;">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-calendar me-1"></i>{{ form.fecha.label }}
-                                </label>
-                                {{ form.fecha }}
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>Las fechas pasadas están bloqueadas
+                        <!-- Step 2: Date and Time Selection -->
+                        <div class="booking-step" id="step-2">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-group-enhanced">
+                                        <label class="form-label fw-bold">
+                                            <i class="fas fa-calendar me-2 text-primary"></i>{{ form.fecha.label }}
+                                            <span class="step-indicator">3</span>
+                                        </label>
+                                        {{ form.fecha }}
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle me-1"></i>Las fechas pasadas están bloqueadas
+                                        </div>
+                                        {% if form.fecha.errors %}
+                                        <div class="text-danger small mt-1 animated-error">{{ form.fecha.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-check-icon" id="fecha-check" style="display: none;">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        </div>
+                                    </div>
                                 </div>
-                                {% if form.fecha.errors %}
-                                <div class="text-danger small mt-1">{{ form.fecha.errors.0 }}</div>
-                                {% endif %}
-                            </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-clock me-1"></i>{{ form.hora.label }}
-                                </label>
-                                <select class="form-select" id="id_hora_select" disabled>
-                                    <option value="">Selecciona fecha y barbero primero</option>
-                                </select>
-                                {{ form.hora }}
-                                <div id="horario-sugerencia" class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>Las horas se cargarán según disponibilidad
+                                <div class="col-12 mb-3">
+                                    <div class="form-group-enhanced">
+                                        <label class="form-label fw-bold mb-3">
+                                            <i class="fas fa-clock me-2 text-primary"></i>{{ form.hora.label }}
+                                            <span class="step-indicator">4</span>
+                                        </label>
+                                        
+                                        <!-- Hidden select and input for form submission -->
+                                        <div style="display: none;">
+                                            <select class="form-select time-selector" id="id_hora_select" disabled>
+                                                <option value="">Selecciona fecha y barbero primero</option>
+                                            </select>
+                                            {{ form.hora }}
+                                        </div>
+                                        
+                                        <!-- Time slots grid -->
+                                        <div class="time-slots-container" id="time-slots-container">
+                                            <div class="time-slots-placeholder">
+                                                <i class="fas fa-clock text-muted"></i>
+                                                <p class="text-muted mb-0">Selecciona fecha y barbero para ver horarios disponibles</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div id="horario-sugerencia" class="form-text status-message mt-3">
+                                            <i class="fas fa-info-circle me-1"></i>Las horas se cargarán según disponibilidad
+                                        </div>
+                                        {% if form.hora.errors %}
+                                        <div class="text-danger small mt-1 animated-error">{{ form.hora.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-check-icon" id="hora-check" style="display: none;">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        </div>
+                                    </div>
                                 </div>
-                                {% if form.hora.errors %}
-                                <div class="text-danger small mt-1">{{ form.hora.errors.0 }}</div>
-                                {% endif %}
                             </div>
                         </div>
 
@@ -106,13 +225,17 @@
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between align-items-center pt-3">
-                            <a href="{% url 'inicio' %}" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-1"></i>Volver al inicio
-                            </a>
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-check me-1"></i>Crear Reserva
-                            </button>
+                        <div class="pt-3">
+                            <div class="d-flex justify-content-center mb-3">
+                                <button type="submit" class="btn btn-primary btn-lg px-5">
+                                    <i class="fas fa-check me-2"></i>Crear Reserva
+                                </button>
+                            </div>
+                            <div class="text-center">
+                                <a href="{% url 'inicio' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>Volver al inicio
+                                </a>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -121,34 +244,41 @@
     </div>
 </div>
 
-<!-- JavaScript de validación de reservas -->
-<script src="{% static 'agendabarber/js/reserva-validation.js' %}?v=2.0"></script>
+<!-- Enhanced Booking System JavaScript -->
+<script src="{% static 'agendabarber/js/reserva-validation.js' %}?v=3.0"></script>
 
-<!-- Test adicional para verificar carga -->
+{% endblock %}
+
+{% block extra_js %}
 <script>
-console.log('🔍 Verificando carga de JavaScript...');
-setTimeout(function() {
-    console.log('⏰ Verificación después de 1 segundo');
-    const elementos = {
-        fecha: document.getElementById('id_fecha'),
-        barbero: document.getElementById('id_barbero'),
-        servicio: document.getElementById('id_servicio'),
-        horaSelect: document.getElementById('id_hora_select'),
-        horaHidden: document.getElementById('id_hora_hidden'),
-        servicioInfo: document.getElementById('servicio-info'),
-        horarioSugerencia: document.getElementById('horario-sugerencia')
-    };
-    
-    console.log('📋 Estado de elementos:', elementos);
-    
-    Object.keys(elementos).forEach(key => {
-        if (!elementos[key]) {
-            console.error(`❌ Elemento ${key} no encontrado`);
-        } else {
-            console.log(`✅ Elemento ${key} encontrado`);
-        }
-    });
-}, 1000);
+// Initialize Flatpickr for date selection
+document.addEventListener('DOMContentLoaded', function() {
+    const fechaInput = document.getElementById('id_fecha');
+    if (fechaInput) {
+        flatpickr(fechaInput, {
+            locale: 'es',
+            theme: 'material_blue',
+            dateFormat: 'Y-m-d',
+            minDate: 'today',
+            maxDate: new Date().fp_incr(90), // 90 days from today
+            disableMobile: false,
+            allowInput: false,
+            clickOpens: true,
+            animate: true,
+            position: 'auto',
+            onChange: function(selectedDates, dateStr, instance) {
+                // Trigger the change event for our booking system
+                const event = new Event('change', { bubbles: true });
+                fechaInput.dispatchEvent(event);
+            },
+            onReady: function(selectedDates, dateStr, instance) {
+                // Add custom styling
+                const calendar = instance.calendarContainer;
+                calendar.classList.add('flatpickr-enhanced');
+            }
+        });
+    }
+});
 </script>
 
 {% endblock %}
