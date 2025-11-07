@@ -1,40 +1,77 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.body.classList.add('inicio-page');
+    });
+</script>
+{% endblock %}
+
 {% block content %}
 
-<!-- Mensaje de bienvenida personalizado -->
-{% if user.is_authenticated %}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="alert {% if es_barbero %}alert-primary{% else %}alert-success{% endif %} border-0 shadow-sm">
-                <h4 class="alert-heading mb-2">
-                    <i class="fas {% if es_barbero %}fa-user-tie{% else %}fa-user{% endif %} me-2"></i>
-                    ¡Bienvenido{% if es_barbero %} de vuelta{% endif %}, {{ user.get_full_name|default:user.username }}!
-                </h4>
-                <p class="mb-0">
-                    {% if es_barbero %}
-                        Aquí tienes un resumen de tus reservas pendientes para hoy.
-                    {% else %}
-                        Aquí puedes ver tus próximas reservas y agendar nuevos servicios.
-                    {% endif %}
-                </p>
+<!-- Hero Section -->
+{% if not user.is_authenticated %}
+<section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="container-fluid h-100">
+        <div class="row h-100 align-items-center">
+            <div class="col-12 text-center text-white">
+                <div class="hero-content animate-fade-in">
+                    <h1 class="hero-title mb-4">
+                        <span class="gradient-text">Agenda Barber</span>
+                        <span class="barber-icon">💈</span>
+                    </h1>
+                    <p class="hero-subtitle mb-5">
+                        Transforma tu estilo con los mejores barberos profesionales.<br>
+                        <strong>Reserva tu cita en segundos</strong>
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="{% url 'registro' %}" class="btn btn-hero-primary btn-lg me-3">
+                            <i class="fas fa-rocket me-2"></i>Comenzar Ahora
+                        </a>
+                        <a href="{% url 'login' %}" class="btn btn-hero-outline btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+    <div class="hero-scroll-indicator">
+        <i class="fas fa-chevron-down"></i>
+    </div>
+</section>
 {% else %}
-    <div class="row mb-5">
-        <div class="col-12 text-center">
-            <h1 class="display-4 fw-bold text-primary mb-3">Agenda Barber 💈</h1>
-            <p class="lead text-muted mb-4">Tu barbería de confianza. Agenda tu cita de forma fácil y rápida.</p>
-            <div class="d-flex justify-content-center gap-3">
-                <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
-                    <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
-                </a>
-                <a href="{% url 'registro' %}" class="btn btn-outline-primary btn-lg">
-                    <i class="fas fa-user-plus me-2"></i>Registrarse
-                </a>
+<!-- Dashboard para usuarios autenticados -->
+<div class="dashboard-welcome">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="welcome-card {% if es_barbero %}barbero-theme{% else %}cliente-theme{% endif %}">
+                    <div class="welcome-content">
+                        <div class="welcome-icon">
+                            <i class="fas {% if es_barbero %}fa-user-tie{% else %}fa-user-circle{% endif %}"></i>
+                        </div>
+                        <div class="welcome-text">
+                            <h2 class="welcome-title">
+                                ¡Hola, {{ user.get_full_name|default:user.username }}! 👋
+                            </h2>
+                            <p class="welcome-subtitle">
+                                {% if es_barbero %}
+                                    Panel de control para barbero - Gestiona tus citas del día
+                                {% else %}
+                                    Tu espacio personal - Reserva y gestiona tus citas
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+</div>
 {% endif %}
 
 <!-- Sección personalizada para barberos -->
@@ -161,83 +198,212 @@
 </div>
 {% endif %}
 
+<!-- Sección de Servicios -->
 {% if servicios %}
-<div class="row mb-4">
-    <div class="col-12">
-        <h2 class="text-center">
-            {% if user.is_authenticated %}
-                Servicios Disponibles
-            {% else %}
-                Nuestros Servicios Destacados
-            {% endif %}
-        </h2>
-        {% if not user.is_authenticated %}
-            <p class="text-center text-muted">Descubre nuestros servicios profesionales de barbería</p>
-        {% endif %}
-    </div>
-</div>
+<section class="services-section">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        {% if user.is_authenticated %}
+                            <span class="gradient-text">Servicios Disponibles</span>
+                        {% else %}
+                            <span class="gradient-text">Nuestros Servicios</span>
+                        {% endif %}
+                    </h2>
+                    <p class="section-subtitle">
+                        {% if not user.is_authenticated %}
+                            Descubre nuestros servicios profesionales de barbería
+                        {% else %}
+                            Elige el servicio perfecto para ti
+                        {% endif %}
+                    </p>
+                    <div class="section-divider"></div>
+                </div>
+            </div>
+        </div>
 
-<div class="scrollable-cards-container mb-5">
-    
-    {% for servicio in servicios %}
-    <div class="card-feature"> 
-        <div class="card h-100 shadow border-0 bg-white">
-            
-            <div class="ratio ratio-4x3"> 
-                <img src="{{ servicio.imagen.url }}" class="card-img-top w-100 h-100" 
-                     alt="{{ servicio.nombre }}" style="object-fit: cover; border-radius: .375rem .375rem 0 0;">
+        <div class="services-grid">
+            {% for servicio in servicios %}
+            <div class="service-card-wrapper" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:100 }}">
+                <div class="service-card">
+                    <div class="service-image-container">
+                        <img src="{{ servicio.imagen.url }}" class="service-image" alt="{{ servicio.nombre }}">
+                        <div class="service-overlay">
+                            <div class="service-price">
+                                <span class="price-currency">$</span>
+                                <span class="price-amount">{{ servicio.precio }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="service-content">
+                        <h3 class="service-title">{{ servicio.nombre }}</h3>
+                        <p class="service-description">
+                            {{ servicio.descripcion|truncatewords:12 }}
+                        </p>
+                        <div class="service-duration">
+                            <i class="fas fa-clock"></i>
+                            <span>{{ servicio.duracion_minutos }} minutos</span>
+                        </div>
+                    </div>
+                    
+                    <div class="service-footer">
+                        <a href="{% url 'crear_reserva' %}?servicio_id={{ servicio.id }}" class="btn-service-book">
+                            <span>Reservar Ahora</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
             </div>
-            
-            <div class="card-body d-flex flex-column">
-                <h5 class="card-title text-primary">{{ servicio.nombre }}</h5>
-                <p class="card-text text-muted small">
-                    {{ servicio.descripcion|truncatewords:15 }}
-                </p>
-                <p class="h4 text-danger mt-auto">
-                    ${{ servicio.precio }}
-                </p>
-            </div>
-            <div class="card-footer bg-white border-0 pt-0">
-                <a href="{% url 'crear_reserva' %}?servicio_id={{ servicio.id }}" class="btn btn-dark w-100">
-                    Reservar ahora
-                </a>
+            {% endfor %}
+        </div>
+
+        <!-- Call to Action -->
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <div class="cta-section">
+                    <h3 class="cta-title">¿No encuentras lo que buscas?</h3>
+                    <p class="cta-subtitle">Consulta nuestro catálogo completo de servicios</p>
+                    <a href="{% url 'catalogo' %}" class="btn btn-cta">
+                        <i class="fas fa-th-large me-2"></i>Ver Catálogo Completo
+                    </a>
+                </div>
             </div>
         </div>
     </div>
-    {% endfor %}
-
-</div>
+</section>
 {% endif %}
 
-<!-- Botón centrado -->
-<div class="row">
-    <div class="col-12 text-center">
-        <button type="button" class="btn btn-info btn-lg" data-bs-toggle="modal" data-bs-target="#infoModal">
-            Información importante 💈
-        </button>
+<!-- Sección de Características -->
+<section class="features-section">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="section-title">
+                    <span class="gradient-text">¿Por qué elegirnos?</span>
+                </h2>
+                <p class="section-subtitle">Experiencia profesional que marca la diferencia</p>
+                <div class="section-divider"></div>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h4 class="feature-title">Reserva Rápida</h4>
+                    <p class="feature-description">
+                        Agenda tu cita en menos de 2 minutos. Sistema intuitivo y fácil de usar.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h4 class="feature-title">Barberos Expertos</h4>
+                    <p class="feature-description">
+                        Profesionales con años de experiencia y técnicas modernas de corte.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h4 class="feature-title">Calidad Garantizada</h4>
+                    <p class="feature-description">
+                        Satisfacción del cliente al 100%. Tu estilo perfecto es nuestra prioridad.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botón de información -->
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <button type="button" class="btn btn-info-custom" data-bs-toggle="modal" data-bs-target="#infoModal">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Guía de Estilos de Corte
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal mejorado -->
+<div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modern-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="infoModalLabel">
+                    <i class="fas fa-cut me-2"></i>Guía de Estilos de Corte
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <div class="info-content">
+                            <h6>FADE (Degradado)</h6>
+                            <p>Transición gradual del cabello. <strong>High</strong>, <strong>Medium</strong> o <strong>Low</strong> se refieren a la altura del degradado.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-wind"></i>
+                        </div>
+                        <div class="info-content">
+                            <h6>TEXTURA</h6>
+                            <p>Irregularidades en la parte superior para dar movimiento y un aspecto más natural o "despeinado".</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-compress-alt"></i>
+                        </div>
+                        <div class="info-content">
+                            <h6>COMPRIMIDO</h6>
+                            <p>Qué tan estirado quieres el degradado: <strong>comprimido</strong> es corto e impactante; <strong>estirado</strong> es más pulido.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-shapes"></i>
+                        </div>
+                        <div class="info-content">
+                            <h6>TERMINACIÓN</h6>
+                            <p>Puede ser <strong>redonda</strong>, <strong>cuadrada</strong> o en <strong>punta (V)</strong>. Permite patillas personalizadas.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-tip">
+                    <i class="fas fa-lightbulb"></i>
+                    <p>Esperamos que esta información te ayude a elegir tu próximo estilo perfecto.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-modal-close" data-bs-dismiss="modal">
+                    <i class="fas fa-check me-2"></i>Entendido
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Modal centrado -->
-<div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content bg-dark text-white">
-      <div class="modal-header border-0">
-        <h5 class="modal-title" id="infoModalLabel">Conceptos que debes entender</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-      <div class="modal-body">
-        <p>Actualmente en internet hay muchos conceptos que te pueden dificultar la elección de tu corte de pelo, pero aquí te los explico de manera sencilla.</p>
-        <p><strong>FADE:</strong> “Fade” es literalmente “degradado” en inglés. Cuando dicen <em>high</em>, <em>medium</em> o <em>low</em>, se refieren a la altura del degradado.</p>
-        <p><strong>TEXTURA:</strong> Se refiere a crear irregularidades en la parte superior para dar movimiento y un aspecto más casual o “despeinado”.</p>
-        <p><strong>COMPRIMIDO:</strong> Hace referencia a qué tan estirado quieres el degradado: uno comprimido es corto y de alto impacto visual; uno estirado es más pulido.</p>
-        <p><strong>TERMINACIÓN:</strong> Puede ser redonda, cuadrada o en punta (V). No todos los degradados deben ser rapados, lo que permite patillas o terminaciones personalizadas.</p>
-        <p class="mt-3 text-center">💡 <em>Esperamos que esta información te ayude a elegir tu próximo estilo.</em></p>
-      </div>
-      <div class="modal-footer border-0 justify-content-center">
-        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cerrar</button>
-      </div>
-    </div>
-  </div>
-</div>
 {% endblock %}

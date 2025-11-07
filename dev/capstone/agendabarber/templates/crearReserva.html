@@ -1,15 +1,25 @@
 {% extends "base.html" %}
 {% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'agendabarber/css/enhanced-booking.css' %}">
+{% endblock %}
+
 {% block content %}
 
-<div class="container my-5">
+<div class="container-fluid my-5 px-4">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
+        <div class="col-12 col-xl-10 col-xxl-8">
+            <div class="card reserva-card-wide shadow-lg">
+                <div class="card-header text-center">
                     <h3 class="mb-0"><i class="fas fa-calendar-plus me-2"></i>Nueva Reserva</h3>
                 </div>
                 <div class="card-body">
+                    <!-- Progress indicator -->
+                    <div class="progress mb-4" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" style="width: 25%" id="booking-progress"></div>
+                    </div>
+
                     {% if messages %}
                     {% for message in messages %}
                     <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
@@ -45,42 +55,49 @@
                     <form method="post" id="reservaForm">
                         {% csrf_token %}
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-user-tie me-1"></i>{{ form.barbero.label }}
-                                </label>
-                                {{ form.barbero }}
-                                {% if form.barbero.errors %}
-                                <div class="text-danger small mt-1">{{ form.barbero.errors.0 }}</div>
-                                {% endif %}
+                        <!-- Primera fila: Barbero y Servicio -->
+                        <div class="row mb-4">
+                            <div class="col-lg-6 mb-3 mb-lg-0">
+                                <div class="form-group-wide">
+                                    <label class="form-label fw-bold">
+                                        <i class="fas fa-user-tie me-2 text-primary"></i>{{ form.barbero.label }}
+                                    </label>
+                                    {{ form.barbero }}
+                                    {% if form.barbero.errors %}
+                                    <div class="text-danger small mt-1">{{ form.barbero.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-cut me-1"></i>{{ form.servicio.label }}
-                                </label>
-                                {{ form.servicio }}
-                                {% if form.servicio.errors %}
-                                <div class="text-danger small mt-1">{{ form.servicio.errors.0 }}</div>
-                                {% endif %}
-                                <div id="servicio-info" class="mt-2"></div>
+                            <div class="col-lg-6">
+                                <div class="form-group-wide">
+                                    <label class="form-label fw-bold">
+                                        <i class="fas fa-cut me-2 text-primary"></i>{{ form.servicio.label }}
+                                    </label>    
+                                    {{ form.servicio }}
+                                    {% if form.servicio.errors %}
+                                    <div class="text-danger small mt-1">{{ form.servicio.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-calendar me-1"></i>{{ form.fecha.label }}
-                                </label>
-                                {{ form.fecha }}
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>Las fechas pasadas están bloqueadas
+                        <!-- Segunda fila: Fecha y Hora -->
+                        <div class="row mb-4">
+                            <div class="col-lg-6 mb-3 mb-lg-0">
+                                <div class="form-group-wide">
+                                    <label class="form-label fw-bold">
+                                        <i class="fas fa-calendar me-2 text-primary"></i>{{ form.fecha.label }}
+                                    </label>
+                                    {{ form.fecha }}
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>Las fechas pasadas están bloqueadas
+                                    </div>
+                                    {% if form.fecha.errors %}
+                                    <div class="text-danger small mt-1">{{ form.fecha.errors.0 }}</div>
+                                    {% endif %}
                                 </div>
-                                {% if form.fecha.errors %}
-                                <div class="text-danger small mt-1">{{ form.fecha.errors.0 }}</div>
-                                {% endif %}
                             </div>
+<<<<<<< HEAD
 
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">
@@ -93,29 +110,47 @@
                                 <!-- Verificar que el campo hidden se renderiza correctamente -->
                                 <div id="horario-sugerencia" class="form-text">
                                     <i class="fas fa-info-circle me-1"></i>Las horas se cargarán según disponibilidad
+=======
+                            <div class="col-lg-6">
+                                <div class="form-group-wide">
+                                    <label class="form-label fw-bold">
+                                        <i class="fas fa-clock me-2 text-primary"></i>{{ form.hora.label }}
+                                    </label>
+                                    {{ form.hora }}
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>Las horas se cargarán según disponibilidad
+                                    </div>
+                                    {% if form.hora.errors %}
+                                    <div class="text-danger small mt-1">{{ form.hora.errors.0 }}</div>
+                                    {% endif %}
+>>>>>>> c29a06422c118aabd83ec4152462e37b25be09aa
                                 </div>
-                                {% if form.hora.errors %}
-                                <div class="text-danger small mt-1">{{ form.hora.errors.0 }}</div>
-                                {% endif %}
                             </div>
                         </div>
 
+<<<<<<< HEAD
                         <!-- Email no necesario - se usa el del usuario logueado -->
 
                         <!-- Info de horarios mejorada -->
                         <div class="alert alert-info border-0 bg-light">
                             <div class="row text-center">
                                 <div class="col-md-4">
+=======
+                        <!-- Info de horarios -->
+                        <div class="alert alert-info mb-4">
+                            <div class="row text-center g-3">
+                                <div class="col-lg-4 col-md-6 mb-2">
+>>>>>>> c29a06422c118aabd83ec4152462e37b25be09aa
                                     <i class="fas fa-business-time text-primary"></i>
                                     <div class="fw-bold">Lunes - Viernes</div>
                                     <div class="small">18:00 - 21:00</div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-lg-4 col-md-6 mb-2">
                                     <i class="fas fa-calendar-week text-success"></i>
                                     <div class="fw-bold">Sábados</div>
                                     <div class="small">09:00 - 18:00</div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-lg-4 col-md-12 mb-2">
                                     <i class="fas fa-times-circle text-danger"></i>
                                     <div class="fw-bold">Domingos</div>
                                     <div class="small">Cerrado</div>
@@ -123,6 +158,7 @@
                             </div>
                         </div>
 
+<<<<<<< HEAD
                         <div class="d-flex justify-content-between align-items-center pt-3">
                             <a href="{% url 'inicio' %}" class="btn btn-outline-secondary">
                                 <i class="fas fa-arrow-left me-1"></i>Volver al inicio
@@ -135,6 +171,20 @@
                                     <i class="fas fa-spinner fa-spin me-1"></i>Redirigiendo a MercadoPago...
                                 </span>
                             </button>
+=======
+                        <!-- Botones -->
+                        <div class="row g-3">
+                            <div class="col-lg-8">
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    <i class="fas fa-check me-2"></i>Crear Reserva
+                                </button>
+                            </div>
+                            <div class="col-lg-4">
+                                <a href="{% url 'inicio' %}" class="btn btn-outline-secondary btn-lg w-100">
+                                    <i class="fas fa-arrow-left me-1"></i>Volver al inicio
+                                </a>
+                            </div>
+>>>>>>> c29a06422c118aabd83ec4152462e37b25be09aa
                         </div>
                     </form>
                 </div>
@@ -143,9 +193,10 @@
     </div>
 </div>
 
-<!-- JavaScript de validación de reservas -->
-<script src="{% static 'agendabarber/js/reserva-validation.js' %}?v=2.0"></script>
+<!-- Enhanced Booking System JavaScript -->
+<script src="{% static 'agendabarber/js/reserva-validation.js' %}?v=3.0"></script>
 
+<<<<<<< HEAD
 <!-- Payment form handling -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -239,6 +290,38 @@ setTimeout(function() {
         }
     });
 }, 1000);
+=======
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize Flatpickr for date selection
+document.addEventListener('DOMContentLoaded', function() {
+    const fechaInput = document.getElementById('id_fecha');
+    if (fechaInput) {
+        flatpickr(fechaInput, {
+            locale: 'es',
+            theme: 'material_blue',
+            dateFormat: 'Y-m-d',
+            minDate: 'today',
+            maxDate: new Date().fp_incr(90),
+            disableMobile: false,
+            allowInput: false,
+            clickOpens: true,
+            animate: true,
+            position: 'auto',
+            onChange: function(selectedDates, dateStr, instance) {
+                const event = new Event('change', { bubbles: true });
+                fechaInput.dispatchEvent(event);
+            },
+            onReady: function(selectedDates, dateStr, instance) {
+                const calendar = instance.calendarContainer;
+                calendar.classList.add('flatpickr-enhanced');
+            }
+        });
+    }
+});
+>>>>>>> c29a06422c118aabd83ec4152462e37b25be09aa
 </script>
 
 {% endblock %}
