@@ -2,16 +2,20 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.db import models
 from .forms import ReservaForm
 from .models import Reserva, Servicio, Barbero, HorarioTrabajo 
 from datetime import timedelta, datetime, time, date
 from django.utils import timezone
-import json 
+import json
+import logging 
 
 # 💡 Nuevas importaciones para autenticación
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -140,9 +144,11 @@ def agenda_barbero(request):
         messages.error(request, 'No tienes permisos de barbero. Contacta al administrador.')
         return redirect('inicio')
     
-    # Obtener reservas del barbero
+    # Obtener reservas del barbero - solo confirmadas y pagadas
     reservas = Reserva.objects.filter(
-        barbero=barbero
+        barbero=barbero,
+        estado__in=['Confirmada', 'Completada'],  # Solo reservas confirmadas o completadas
+        pagado=True  # Solo reservas pagadas
     ).select_related('cliente', 'servicio').order_by('-inicio')
     
     # Estadísticas
@@ -217,57 +223,14 @@ def obtener_horas_disponibles_unified(request):
         except (ValueError, Barbero.DoesNotExist):
             return JsonResponse({'horas': []})
         
-        # Obtener horario del barbero para ese día
-        dia_semana = fecha.isoweekday()
+        # Use the availability service to get available hours (includes automatic cleanup)
+        from .services.availability_service import AvailabilityService
         
-        try:
-            horario = HorarioTrabajo.objects.get(barbero=barbero, dia_semana=dia_semana)
-            hora_inicio = horario.hora_inicio
-            hora_fin = horario.hora_fin
-        except HorarioTrabajo.DoesNotExist:
-            # Usar horario por defecto
-            if 1 <= dia_semana <= 5:  # Lunes a viernes
-                hora_inicio = time(18, 0)
-                hora_fin = time(21, 0)
-            elif dia_semana == 6:  # Sábado
-                hora_inicio = time(9, 0)
-                hora_fin = time(18, 0)
-            else:  # Domingo
-                return JsonResponse({'horas': []})
-        
-        # Generar horas disponibles (cada hora completa)
-        horas_disponibles = []
-        datetime_inicio = datetime.combine(fecha, hora_inicio)
-        datetime_fin = datetime.combine(fecha, hora_fin)
-        
-        hora_actual = datetime_inicio
-        while hora_actual < datetime_fin:
-            # Verificar si esta hora está ocupada
-            inicio_slot = timezone.make_aware(hora_actual)
-            fin_slot = inicio_slot + timedelta(hours=1)
-            
-            ocupado = Reserva.objects.filter(
-                barbero=barbero,
-                inicio__date=fecha,
-                estado__in=['Pendiente', 'Confirmada'],
-                inicio__lt=fin_slot,
-                fin__gt=inicio_slot
-            ).exists()
-            
-            if not ocupado:
-                hora_data = {
-                    'value': hora_actual.time().strftime('%H:%M'),
-                    'text': hora_actual.time().strftime('%H:%M')
-                }
-                
-                # Agregar información adicional para formato completo (frontend moderno)
-                if formato == 'completo':
-                    hora_data['datetime'] = inicio_slot.isoformat()
-                
-                horas_disponibles.append(hora_data)
-            
-            # Avanzar 1 hora
-            hora_actual += timedelta(hours=1)
+        horas_disponibles = AvailabilityService.cleanup_and_get_availability(
+            barbero=barbero,
+            fecha=fecha,
+            formato=formato
+        )
         
         # Formato de respuesta según el tipo de frontend
         if formato == 'completo':
@@ -387,25 +350,769 @@ def crearReserva(request):
     if request.method == 'POST':
         form = ReservaForm(request.POST)
         if form.is_valid():
-            # El formulario ya validó todo, solo necesitamos crear la reserva
-            reserva = form.save(commit=False)
-            reserva.cliente = request.user
-            
-            # Usar los valores calculados por el formulario
-            cleaned_data = form.cleaned_data
-            reserva.inicio = cleaned_data['inicio_calculado']
-            reserva.fin = cleaned_data['fin_calculado']
+            # Import required services
+            from .services.temporary_reservation_service import TemporaryReservationService
+            from .services.mercadopago_service import MercadoPagoService, MercadoPagoServiceError
             
             try:
-                reserva.save()
-                messages.success(request, 'Reserva creada correctamente.')
-                return redirect('confirmacion_reserva')
+                # Log form data for debugging
+                logger.info(f"Form is valid. Cleaned data keys: {list(form.cleaned_data.keys())}")
+                logger.info(f"Has inicio_calculado: {'inicio_calculado' in form.cleaned_data}")
+                logger.info(f"Has fin_calculado: {'fin_calculado' in form.cleaned_data}")
+                logger.info(f"User: {request.user.email}, Session: {request.session.session_key}")
+                # Get or create session key
+                if not request.session.session_key:
+                    request.session.create()
+                session_key = request.session.session_key
+                
+                # Use logged user's email or fallback to username (email not required)
+                cliente_email = request.user.email or f"{request.user.username}@noemail.local"
+                
+                # Final availability validation before creating temporary reservation
+                availability_check = TemporaryReservationService.validate_availability_before_payment(
+                    barbero=form.cleaned_data['barbero'],
+                    inicio=form.cleaned_data['inicio_calculado'],
+                    fin=form.cleaned_data['fin_calculado']
+                )
+                
+                if not availability_check['available']:
+                    messages.error(request, availability_check['message'])
+                    logger.warning(f"Availability check failed for user {request.user.id}: {availability_check['message']}")
+                    return render(request, 'crearReserva.html', {'form': form})
+                
+                # Create temporary reservation
+                cliente_nombre = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username or "Usuario"
+                logger.info(f"Creating temp reservation for: {cliente_email}, name: {cliente_nombre}")
+                
+                temp_reservation = TemporaryReservationService.create_temporary_reservation(
+                    form_data=form.cleaned_data,
+                    session_key=session_key,
+                    cliente_email=cliente_email,
+                    cliente_nombre=cliente_nombre
+                )
+                
+                # Create MercadoPago preference
+                mp_service = MercadoPagoService()
+                preference_data = mp_service.create_preference(temp_reservation)
+                
+                # Store preference info in session for tracking
+                request.session['temp_reservation_id'] = str(temp_reservation.id)
+                request.session['mp_preference_id'] = preference_data['preference_id']
+                
+                # Redirect to MercadoPago payment page
+                return redirect(preference_data['init_point'])
+                
+            except MercadoPagoServiceError as e:
+                # Use user-friendly message if available
+                error_message = getattr(e, 'user_message', str(e))
+                messages.error(request, error_message)
+                logger.error(f"MercadoPago error for user {request.user.id}: {str(e)} (code: {getattr(e, 'error_code', 'unknown')})")
+                
+                # Add specific handling for different error types
+                if getattr(e, 'error_code') == 'expired_reservation':
+                    messages.info(request, 'Puedes intentar crear una nueva reserva.')
+                elif getattr(e, 'error_code') == 'invalid_credentials':
+                    messages.error(request, 'Hay un problema con la configuración del sistema. Por favor contacta al soporte.')
+                
+            except ValueError as e:
+                messages.error(request, str(e))
+                logger.warning(f"Validation error in crearReserva for user {request.user.id}: {str(e)}")
             except Exception as e:
-                messages.error(request, 'Error al guardar la reserva. Inténtalo de nuevo.')
+                messages.error(request, 'Error inesperado al crear la reserva. Por favor inténtalo de nuevo.')
+                logger.error(f"Unexpected error in crearReserva for user {request.user.id}: {str(e)}", exc_info=True)
         else:
             # Los errores del formulario se mostrarán automáticamente en el template
+            logger.warning(f"Form is not valid. Errors: {form.errors}")
+            logger.warning(f"Form data: {request.POST}")
             messages.error(request, 'Por favor corrige los errores en el formulario.')
     else:
         form = ReservaForm(initial=initial_data)
     
     return render(request, 'crearReserva.html', {'form': form})
+
+def obtener_disponibilidad_detallada(request):
+    """Vista para obtener información detallada de disponibilidad incluyendo bloqueos temporales"""
+    if request.method == 'GET':
+        fecha_str = request.GET.get('fecha')
+        barbero_id = request.GET.get('barbero')
+        
+        if not fecha_str or not barbero_id:
+            return JsonResponse({'error': 'Fecha y barbero requeridos'})
+        
+        try:
+            fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            barbero = Barbero.objects.get(id=barbero_id)
+        except (ValueError, Barbero.DoesNotExist):
+            return JsonResponse({'error': 'Fecha o barbero inválidos'})
+        
+        from .services.availability_service import AvailabilityService
+        
+        # Get available hours
+        horas_disponibles = AvailabilityService.get_available_hours_for_date(
+            barbero=barbero,
+            fecha=fecha,
+            formato='completo'
+        )
+        
+        # Get blocked slots
+        blocked_slots = AvailabilityService.get_blocked_slots_for_date(barbero, fecha)
+        
+        return JsonResponse({
+            'fecha': fecha_str,
+            'barbero': {
+                'id': barbero.id,
+                'nombre': barbero.nombre
+            },
+            'horas_disponibles': horas_disponibles,
+            'reservas_confirmadas': blocked_slots['reservas'],
+            'reservas_temporales': blocked_slots['temporary'],
+            'total_disponibles': len(horas_disponibles),
+            'total_bloqueadas': len(blocked_slots['reservas']) + len(blocked_slots['temporary'])
+        })
+    
+    return JsonResponse({'error': 'Método no permitido'})
+
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+import json
+
+@csrf_exempt
+def cleanup_expired_reservations(request):
+    """
+    API endpoint to trigger cleanup of expired temporary reservations.
+    Can be called by cron jobs or external schedulers.
+    """
+    if request.method == 'POST':
+        from .services.cleanup_service import CleanupService
+        
+        try:
+            # Get optional parameters
+            data = {}
+            if request.body:
+                try:
+                    data = json.loads(request.body)
+                except json.JSONDecodeError:
+                    pass
+            
+            force_full_cleanup = data.get('full_cleanup', False)
+            
+            if force_full_cleanup:
+                result = CleanupService.full_cleanup()
+            else:
+                result = CleanupService.cleanup_expired_temporary_reservations()
+            
+            return JsonResponse(result)
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e),
+                'timestamp': timezone.now().isoformat()
+            }, status=500)
+    
+    elif request.method == 'GET':
+        # Return cleanup statistics
+        from .services.cleanup_service import CleanupService
+        
+        try:
+            stats = CleanupService.get_cleanup_stats()
+            return JsonResponse(stats)
+        except Exception as e:
+            return JsonResponse({
+                'error': str(e),
+                'timestamp': timezone.now().isoformat()
+            }, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+# ----------------------------------------------------------------------
+# PAYMENT CALLBACK VIEWS
+# ----------------------------------------------------------------------
+
+def payment_success(request):
+    """
+    Handle successful payment callback from MercadoPago.
+    Shows confirmation page with reservation details.
+    """
+    try:
+        # Validate request method
+        if request.method not in ['GET', 'POST']:
+            logger.warning(f"Invalid method {request.method} for payment success callback")
+            messages.error(request, 'Método de acceso inválido.')
+            return redirect('inicio')
+        
+        # Get and validate parameters from MercadoPago callback
+        collection_id = request.GET.get('collection_id')
+        collection_status = request.GET.get('collection_status')
+        payment_id = request.GET.get('payment_id')
+        status = request.GET.get('status')
+        external_reference = request.GET.get('external_reference')
+        payment_type = request.GET.get('payment_type')
+        merchant_order_id = request.GET.get('merchant_order_id')
+        preference_id = request.GET.get('preference_id')
+        site_id = request.GET.get('site_id')
+        processing_mode = request.GET.get('processing_mode')
+        merchant_account_id = request.GET.get('merchant_account_id')
+        
+        # Validate required parameters
+        if not (payment_id or collection_id):
+            logger.error("Payment success callback missing payment_id and collection_id")
+            messages.error(request, 'Faltan parámetros requeridos del pago.')
+            return redirect('inicio')
+        
+        # Validate status indicates success
+        actual_status = status or collection_status
+        if actual_status and actual_status not in ['approved', 'authorized']:
+            logger.warning(f"Payment success callback with non-success status: {actual_status}")
+            messages.warning(request, f'El estado del pago no indica éxito: {actual_status}')
+            return redirect('payment_failure') + f'?status={actual_status}'
+        
+        # Get temp_reservation_id from URL parameter or session
+        temp_reservation_id = request.GET.get('temp_reservation_id')
+        if not temp_reservation_id:
+            temp_reservation_id = request.session.get('temp_reservation_id')
+        
+        context = {
+            'success': True,
+            'payment_id': payment_id or collection_id,
+            'status': status or collection_status,
+            'external_reference': external_reference,
+            'payment_type': payment_type,
+            'merchant_order_id': merchant_order_id,
+            'preference_id': preference_id,
+            'temp_reservation_id': temp_reservation_id,
+        }
+        
+        # SIMPLIFIED: Process payment directly without webhook dependency
+        if temp_reservation_id:
+            try:
+                from .models import TemporaryReservation, PaymentTransaction
+                from django.contrib.auth.models import User
+                
+                # Get temporary reservation
+                temp_res = TemporaryReservation.objects.get(id=temp_reservation_id)
+                
+                # Check if final reservation was already created
+                existing_transaction = PaymentTransaction.objects.filter(
+                    temp_reservation=temp_res
+                ).first()
+                
+                if existing_transaction and existing_transaction.reserva:
+                    # Reservation already exists
+                    context.update({
+                        'reserva': existing_transaction.reserva,
+                        'final_reservation_created': True,
+                        'barbero': existing_transaction.reserva.barbero,
+                        'servicio': existing_transaction.reserva.servicio,
+                        'inicio': existing_transaction.reserva.inicio,
+                        'fin': existing_transaction.reserva.fin,
+                        'success_message': '¡Reserva confirmada exitosamente!'
+                    })
+                else:
+                    # Create final reservation directly (simplified for development)
+                    try:
+                        # Use the logged user directly (no email dependency)
+                        if request.user.is_authenticated:
+                            cliente_user = request.user
+                        else:
+                            # Fallback: try to find user by email or username
+                            if '@' in temp_res.cliente_email and not temp_res.cliente_email.endswith('@noemail.local'):
+                                cliente_user = User.objects.get(email=temp_res.cliente_email)
+                            else:
+                                # Extract username from fake email
+                                username = temp_res.cliente_email.split('@')[0]
+                                cliente_user = User.objects.get(username=username)
+                        
+                        # Create payment transaction
+                        if not existing_transaction:
+                            payment_transaction = PaymentTransaction.objects.create(
+                                temp_reservation=temp_res,
+                                mp_payment_id=payment_id or f"DEV-{temp_res.id}-{int(datetime.now().timestamp())}",
+                                mp_preference_id=preference_id or f"PREF-{temp_res.id}",
+                                amount=temp_res.servicio.precio,
+                                status='approved',
+                                payment_method='credit_card',
+                                description=f'Pago procesado para reserva {temp_res.id}',
+                                external_reference=external_reference or str(temp_res.id)
+                            )
+                        else:
+                            payment_transaction = existing_transaction
+                            payment_transaction.status = 'approved'
+                            payment_transaction.save()
+                        
+                        # Create final reservation
+                        reserva_final = Reserva.objects.create(
+                            cliente=cliente_user,
+                            barbero=temp_res.barbero,
+                            servicio=temp_res.servicio,
+                            inicio=temp_res.inicio,
+                            fin=temp_res.fin,
+                            estado='Confirmada',
+                            pagado=True,
+                            payment_method='MercadoPago'
+                        )
+                        
+                        # Link transaction to final reservation
+                        payment_transaction.reserva = reserva_final
+                        payment_transaction.save()
+                        
+                        context.update({
+                            'reserva': reserva_final,
+                            'final_reservation_created': True,
+                            'barbero': reserva_final.barbero,
+                            'servicio': reserva_final.servicio,
+                            'inicio': reserva_final.inicio,
+                            'fin': reserva_final.fin,
+                            'success_message': '¡Pago procesado y reserva confirmada exitosamente!'
+                        })
+                        
+                        logger.info(f"Final reservation created: ID {reserva_final.id} for user {cliente_user.email}")
+                        
+                    except User.DoesNotExist:
+                        logger.error(f"User not found for identifier: {temp_res.cliente_email}")
+                        context.update({
+                            'temp_reservation': temp_res,
+                            'final_reservation_created': False,
+                            'barbero': temp_res.barbero,
+                            'servicio': temp_res.servicio,
+                            'inicio': temp_res.inicio,
+                            'fin': temp_res.fin,
+                            'error_message': 'Usuario no encontrado. Inicia sesión nuevamente.'
+                        })
+                    except Exception as e:
+                        logger.error(f"Error creating final reservation: {str(e)}")
+                        context.update({
+                            'temp_reservation': temp_res,
+                            'final_reservation_created': False,
+                            'barbero': temp_res.barbero,
+                            'servicio': temp_res.servicio,
+                            'inicio': temp_res.inicio,
+                            'fin': temp_res.fin,
+                            'error_message': 'Error procesando la reserva. Contacta al soporte.'
+                        })
+                    
+            except TemporaryReservation.DoesNotExist:
+                logger.warning(f"Temporary reservation {temp_reservation_id} not found in success callback")
+                context['warning_message'] = 'No se encontraron detalles de la reserva, pero el pago fue procesado correctamente.'
+        
+        # Clear session data
+        if 'temp_reservation_id' in request.session:
+            del request.session['temp_reservation_id']
+        if 'mp_preference_id' in request.session:
+            del request.session['mp_preference_id']
+        
+        logger.info(f"Payment success callback: payment_id={payment_id}, status={status}, temp_reservation={temp_reservation_id}")
+        
+        return render(request, 'payment_success.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in payment success callback: {str(e)}")
+        messages.error(request, 'Hubo un error al procesar la confirmación del pago.')
+        return redirect('inicio')
+
+
+def payment_failure(request):
+    """
+    Handle failed payment callback from MercadoPago.
+    Shows error page with retry options.
+    """
+    try:
+        # Validate request method
+        if request.method not in ['GET', 'POST']:
+            logger.warning(f"Invalid method {request.method} for payment failure callback")
+            messages.error(request, 'Método de acceso inválido.')
+            return redirect('inicio')
+        
+        # Get and validate parameters from MercadoPago callback
+        collection_id = request.GET.get('collection_id')
+        collection_status = request.GET.get('collection_status')
+        payment_id = request.GET.get('payment_id')
+        status = request.GET.get('status')
+        external_reference = request.GET.get('external_reference')
+        payment_type = request.GET.get('payment_type')
+        merchant_order_id = request.GET.get('merchant_order_id')
+        preference_id = request.GET.get('preference_id')
+        
+        # Log callback for debugging
+        logger.info(f"Payment failure callback: payment_id={payment_id}, status={status}")
+        
+        # Validate that we have some payment identifier
+        if not (payment_id or collection_id or preference_id):
+            logger.error("Payment failure callback missing all payment identifiers")
+            messages.error(request, 'No se pudo identificar el pago fallido.')
+            return redirect('inicio')
+        
+        # Get temp_reservation_id from URL parameter or session
+        temp_reservation_id = request.GET.get('temp_reservation_id')
+        if not temp_reservation_id:
+            temp_reservation_id = request.session.get('temp_reservation_id')
+        
+        context = {
+            'success': False,
+            'payment_id': payment_id or collection_id,
+            'status': status or collection_status,
+            'external_reference': external_reference,
+            'payment_type': payment_type,
+            'merchant_order_id': merchant_order_id,
+            'preference_id': preference_id,
+            'temp_reservation_id': temp_reservation_id,
+        }
+        
+        # Try to get reservation details for retry option
+        if temp_reservation_id:
+            try:
+                from .models import TemporaryReservation
+                temp_res = TemporaryReservation.objects.get(id=temp_reservation_id)
+                
+                if not temp_res.is_expired:
+                    context.update({
+                        'temp_reservation': temp_res,
+                        'can_retry': True,
+                        'barbero': temp_res.barbero,
+                        'servicio': temp_res.servicio,
+                        'inicio': temp_res.inicio,
+                        'fin': temp_res.fin,
+                        'expires_at': temp_res.expires_at,
+                        'retry_message': f'Tienes hasta las {temp_res.expires_at.strftime("%H:%M")} para completar el pago.'
+                    })
+                else:
+                    context.update({
+                        'can_retry': False,
+                        'expired_message': 'El tiempo para completar esta reserva ha expirado. Puedes crear una nueva reserva.'
+                    })
+                    
+            except (TemporaryReservation.DoesNotExist, ValueError):
+                logger.warning(f"Temporary reservation {temp_reservation_id} not found in failure callback")
+                context.update({
+                    'can_retry': False,
+                    'error_message': 'No se encontraron detalles de la reserva.'
+                })
+        
+        logger.info(f"Payment failure callback: payment_id={payment_id}, status={status}, temp_reservation={temp_reservation_id}")
+        
+        return render(request, 'payment_failure.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in payment failure callback: {str(e)}")
+        messages.error(request, 'Hubo un error al procesar la respuesta del pago.')
+        return redirect('inicio')
+
+
+def payment_pending(request):
+    """
+    Handle pending payment callback from MercadoPago.
+    Shows pending status page with information.
+    """
+    try:
+        # Validate request method
+        if request.method not in ['GET', 'POST']:
+            logger.warning(f"Invalid method {request.method} for payment pending callback")
+            messages.error(request, 'Método de acceso inválido.')
+            return redirect('inicio')
+        
+        # Get and validate parameters from MercadoPago callback
+        collection_id = request.GET.get('collection_id')
+        collection_status = request.GET.get('collection_status')
+        payment_id = request.GET.get('payment_id')
+        status = request.GET.get('status')
+        external_reference = request.GET.get('external_reference')
+        payment_type = request.GET.get('payment_type')
+        merchant_order_id = request.GET.get('merchant_order_id')
+        preference_id = request.GET.get('preference_id')
+        
+        # Log callback for debugging
+        logger.info(f"Payment pending callback: payment_id={payment_id}, status={status}")
+        
+        # Validate that we have some payment identifier
+        if not (payment_id or collection_id or preference_id):
+            logger.error("Payment pending callback missing all payment identifiers")
+            messages.error(request, 'No se pudo identificar el pago pendiente.')
+            return redirect('inicio')
+        
+        # Get temp_reservation_id from URL parameter or session
+        temp_reservation_id = request.GET.get('temp_reservation_id')
+        if not temp_reservation_id:
+            temp_reservation_id = request.session.get('temp_reservation_id')
+        
+        context = {
+            'pending': True,
+            'payment_id': payment_id or collection_id,
+            'status': status or collection_status,
+            'external_reference': external_reference,
+            'payment_type': payment_type,
+            'merchant_order_id': merchant_order_id,
+            'preference_id': preference_id,
+            'temp_reservation_id': temp_reservation_id,
+        }
+        
+        # Try to get reservation details
+        if temp_reservation_id:
+            try:
+                from .models import TemporaryReservation
+                temp_res = TemporaryReservation.objects.get(id=temp_reservation_id)
+                
+                context.update({
+                    'temp_reservation': temp_res,
+                    'barbero': temp_res.barbero,
+                    'servicio': temp_res.servicio,
+                    'inicio': temp_res.inicio,
+                    'fin': temp_res.fin,
+                    'expires_at': temp_res.expires_at,
+                })
+                
+                # Determine pending message based on payment type
+                if payment_type in ['bank_transfer', 'atm']:
+                    context['pending_message'] = 'Tu pago está siendo procesado por el banco. Te notificaremos cuando se confirme.'
+                elif payment_type == 'ticket':
+                    context['pending_message'] = 'Tu pago en efectivo está pendiente. Una vez que realices el pago, se confirmará automáticamente.'
+                else:
+                    context['pending_message'] = 'Tu pago está siendo procesado. Te notificaremos cuando se confirme.'
+                    
+            except (TemporaryReservation.DoesNotExist, ValueError):
+                logger.warning(f"Temporary reservation {temp_reservation_id} not found in pending callback")
+                context['warning_message'] = 'No se encontraron detalles de la reserva, pero el pago está siendo procesado.'
+        
+        logger.info(f"Payment pending callback: payment_id={payment_id}, status={status}, temp_reservation={temp_reservation_id}")
+        
+        return render(request, 'payment_pending.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in payment pending callback: {str(e)}")
+        messages.error(request, 'Hubo un error al procesar la respuesta del pago.')
+        return redirect('inicio')
+
+
+# ----------------------------------------------------------------------
+# MERCADOPAGO WEBHOOK ENDPOINT
+# ----------------------------------------------------------------------
+
+@csrf_exempt
+def mercadopago_webhook(request):
+    """
+    Handle MercadoPago webhook notifications.
+    Validates webhook authenticity and processes payment updates asynchronously.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST method allowed'}, status=405)
+    
+    try:
+        # Get request metadata for logging
+        request_meta = {
+            'headers': dict(request.headers),
+            'ip': request.META.get('REMOTE_ADDR'),
+            'user_agent': request.META.get('HTTP_USER_AGENT'),
+            'query_params': dict(request.GET)
+        }
+        
+        # Parse webhook payload
+        try:
+            webhook_data = json.loads(request.body)
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON in webhook payload")
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        
+        # Validate webhook signature if configured
+        from .services.mercadopago_service import MercadoPagoService, MercadoPagoServiceError
+        
+        try:
+            mp_service = MercadoPagoService()
+            
+            # Get signature headers
+            signature = request.headers.get('x-signature', '')
+            user_id = request.headers.get('x-user-id', '')
+            
+            # Validate signature if webhook secret is configured
+            if hasattr(mp_service, 'webhook_secret') and mp_service.webhook_secret:
+                if not mp_service.validate_webhook_signature(request.body, signature, user_id):
+                    logger.error(f"Invalid webhook signature from IP {request_meta['ip']}")
+                    return JsonResponse({'error': 'Invalid signature'}, status=401)
+            else:
+                logger.warning("Webhook signature validation skipped - no secret configured")
+            
+            # Process webhook asynchronously
+            success, message = mp_service.process_webhook(webhook_data, request_meta)
+            
+            if success:
+                logger.info(f"Webhook processed successfully: {message}")
+                return JsonResponse({'status': 'ok', 'message': message})
+            else:
+                logger.error(f"Webhook processing failed: {message}")
+                return JsonResponse({'error': message}, status=500)
+                
+        except MercadoPagoServiceError as e:
+            logger.error(f"MercadoPago service error in webhook: {str(e)} (code: {getattr(e, 'error_code', 'unknown')})")
+            return JsonResponse({
+                'error': 'Service error',
+                'error_code': getattr(e, 'error_code', 'unknown')
+            }, status=500)
+        
+    except Exception as e:
+        logger.error(f"Unexpected error in webhook endpoint: {str(e)}")
+        return JsonResponse({'error': 'Internal server error'}, status=500)
+
+
+def retry_payment(request):
+    """
+    Allow users to retry payment for an existing temporary reservation.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST method allowed'}, status=405)
+    
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Authentication required'}, status=401)
+    
+    try:
+        data = json.loads(request.body)
+        temp_reservation_id = data.get('temp_reservation_id')
+        
+        if not temp_reservation_id:
+            return JsonResponse({'error': 'temp_reservation_id required'}, status=400)
+        
+        from .models import TemporaryReservation
+        from .services.mercadopago_service import MercadoPagoService, MercadoPagoServiceError
+        
+        # Get temporary reservation
+        try:
+            temp_reservation = TemporaryReservation.objects.get(
+                id=temp_reservation_id,
+                cliente_email=request.user.email
+            )
+        except TemporaryReservation.DoesNotExist:
+            return JsonResponse({'error': 'Temporary reservation not found'}, status=404)
+        
+        # Check if reservation is still valid
+        if temp_reservation.is_expired:
+            return JsonResponse({'error': 'Temporary reservation has expired'}, status=400)
+        
+        # Check if time slot is still available
+        from .services.temporary_reservation_service import TemporaryReservationService
+        
+        if not TemporaryReservationService.is_time_slot_available(
+            temp_reservation.barbero, 
+            temp_reservation.inicio, 
+            temp_reservation.fin,
+            exclude_temp_reservation=temp_reservation
+        ):
+            return JsonResponse({'error': 'Time slot is no longer available'}, status=400)
+        
+        # Create new MercadoPago preference
+        try:
+            mp_service = MercadoPagoService()
+            preference_data = mp_service.create_preference(temp_reservation)
+            
+            # Update session data
+            request.session['temp_reservation_id'] = str(temp_reservation.id)
+            request.session['mp_preference_id'] = preference_data['preference_id']
+            
+            return JsonResponse({
+                'success': True,
+                'init_point': preference_data['init_point'],
+                'preference_id': preference_data['preference_id']
+            })
+            
+        except MercadoPagoServiceError as e:
+            error_message = getattr(e, 'user_message', 'Error del servicio de pagos')
+            logger.error(f"Error creating retry preference: {str(e)} (code: {getattr(e, 'error_code', 'unknown')})")
+            return JsonResponse({
+                'error': error_message,
+                'error_code': getattr(e, 'error_code', 'unknown')
+            }, status=500)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        logger.error(f"Error in retry payment: {str(e)}")
+        return JsonResponse({'error': 'Internal server error'}, status=500)
+
+@login_required
+def reserva_payment_details(request, reserva_id):
+    """
+    API endpoint to get payment details for a specific reservation.
+    Only accessible by the barbero or the client who made the reservation.
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Only GET method allowed'}, status=405)
+    
+    try:
+        # Get the reservation
+        try:
+            reserva = Reserva.objects.select_related(
+                'cliente', 'servicio', 'barbero'
+            ).get(id=reserva_id)
+        except Reserva.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Reserva no encontrada'
+            }, status=404)
+        
+        # Check permissions: only barbero or client can access
+        es_cliente = reserva.cliente == request.user
+        es_barbero = False
+        
+        try:
+            barbero = Barbero.objects.get(usuario=request.user)
+            es_barbero = reserva.barbero == barbero
+        except Barbero.DoesNotExist:
+            pass
+        
+        if not (es_cliente or es_barbero):
+            return JsonResponse({
+                'success': False,
+                'message': 'No tienes permisos para ver esta información'
+            }, status=403)
+        
+        # Get payment transaction details
+        payment_details = None
+        try:
+            from .models import PaymentTransaction
+            transaction = PaymentTransaction.objects.get(reserva=reserva)
+            
+            payment_details = {
+                'mp_payment_id': transaction.mp_payment_id,
+                'mp_preference_id': transaction.mp_preference_id,
+                'amount': str(transaction.amount),
+                'status': transaction.status,
+                'payment_method': transaction.payment_method or 'MercadoPago',
+                'created_at': transaction.created_at.strftime('%d/%m/%Y %H:%M'),
+                'updated_at': transaction.updated_at.strftime('%d/%m/%Y %H:%M'),
+            }
+        except PaymentTransaction.DoesNotExist:
+            # No payment transaction found - might be an old reservation
+            payment_details = {
+                'mp_payment_id': None,
+                'mp_preference_id': None,
+                'amount': str(reserva.servicio.precio),
+                'status': 'approved' if reserva.pagado else 'pending',
+                'payment_method': reserva.payment_method or 'MercadoPago',
+                'created_at': reserva.fecha_creacion.strftime('%d/%m/%Y %H:%M') if hasattr(reserva, 'fecha_creacion') else 'N/A',
+                'updated_at': 'N/A',
+            }
+        
+        # Prepare reservation details
+        reserva_details = {
+            'id': reserva.id,
+            'cliente_nombre': f"{reserva.cliente.first_name} {reserva.cliente.last_name}".strip() or reserva.cliente.username,
+            'cliente_email': reserva.cliente.email,
+            'servicio_nombre': reserva.servicio.nombre,
+            'barbero_nombre': reserva.barbero.nombre,
+            'fecha_formateada': reserva.inicio.strftime('%A, %d de %B de %Y'),
+            'hora_inicio': reserva.inicio.strftime('%H:%M'),
+            'hora_fin': reserva.fin.strftime('%H:%M'),
+            'estado': reserva.estado,
+            'pagado': reserva.pagado,
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'payment_details': payment_details,
+            'reserva': reserva_details
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting payment details for reservation {reserva_id}: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': 'Error interno del servidor'
+        }, status=500)

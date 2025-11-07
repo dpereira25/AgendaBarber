@@ -35,6 +35,20 @@ urlpatterns = [
     # Autenticación
     path('auth/registro/', views.registro_usuario, name='registro'),
     path('auth/logout/', views.logout_usuario, name='logout'),
+    
+    # Payment callbacks and webhook
+    path('payment/success/', views.payment_success, name='payment_success'),
+    path('payment/failure/', views.payment_failure, name='payment_failure'),
+    path('payment/pending/', views.payment_pending, name='payment_pending'),
+    path('payment/retry/', views.retry_payment, name='retry_payment'),
+    path('webhooks/mercadopago/', views.mercadopago_webhook, name='mercadopago_webhook'),
+    
+    # Additional availability endpoint
+    path('disponibilidad-detallada/', views.obtener_disponibilidad_detallada, name='disponibilidad_detallada'),
+    path('cleanup-expired/', views.cleanup_expired_reservations, name='cleanup_expired'),
+    
+    # Payment details API
+    path('api/reserva/<int:reserva_id>/payment-details/', views.reserva_payment_details, name='reserva_payment_details'),
 ]
 
 # Configuración de archivos estáticos y media (fotos de barberos/servicios) en entorno de desarrollo

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white text-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-times-circle fa-2x mb-2"></i><br>
+                        Pago No Procesado
+                    </h3>
+                </div>
+                <div class="card-body text-center">
+                    <div class="alert alert-danger border-0 bg-light">
+                        <h4 class="text-danger mb-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No se pudo procesar el pago
+                        </h4>
+                        <p class="mb-0">Tu reserva no ha sido creada. El horario seleccionado ha sido liberado automáticamente.</p>
+                    </div>
+
+                    <!-- Razones comunes del fallo -->
+                    <div class="card bg-light mt-4">
+                        <div class="card-body">
+                            <h6 class="card-title text-warning">
+                                <i class="fas fa-info-circle me-1"></i>Posibles Causas
+                            </h6>
+                            <hr>
+                            <div class="row text-start">
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-credit-card me-2 text-danger"></i>Fondos insuficientes</li>
+                                        <li><i class="fas fa-ban me-2 text-danger"></i>Tarjeta bloqueada o vencida</li>
+                                        <li><i class="fas fa-shield-alt me-2 text-warning"></i>Problemas de seguridad</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-wifi me-2 text-danger"></i>Problemas de conexión</li>
+                                        <li><i class="fas fa-times me-2 text-danger"></i>Pago cancelado por el usuario</li>
+                                        <li><i class="fas fa-clock me-2 text-warning"></i>Tiempo de sesión agotado</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if error_message %}
+                    <div class="alert alert-warning mt-3">
+                        <strong><i class="fas fa-exclamation-triangle me-2"></i>Detalles del Error:</strong>
+                        {{ error_message }}
+                    </div>
+                    {% endif %}
+
+                    <!-- Opciones de retry -->
+                    <div class="card bg-light mt-4">
+                        <div class="card-body">
+                            <h6 class="card-title text-primary">
+                                <i class="fas fa-redo me-1"></i>¿Qué puedes hacer?
+                            </h6>
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-credit-card fa-2x text-primary me-3"></i>
+                                        <div class="text-start">
+                                            <strong>Verificar Tarjeta</strong>
+                                            <div class="small text-muted">Revisa saldo y datos de tu tarjeta</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-redo fa-2x text-success me-3"></i>
+                                        <div class="text-start">
+                                            <strong>Intentar Nuevamente</strong>
+                                            <div class="small text-muted">El horario sigue disponible</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-clock fa-2x text-warning me-3"></i>
+                                        <div class="text-start">
+                                            <strong>Elegir Otra Hora</strong>
+                                            <div class="small text-muted">Ver otros horarios disponibles</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-phone fa-2x text-info me-3"></i>
+                                        <div class="text-start">
+                                            <strong>Contactar Soporte</strong>
+                                            <div class="small text-muted">Si el problema persiste</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div class="row mt-4">
+                        <div class="col-md-4 mb-2">
+                            <a href="{% url 'crear_reserva' %}" class="btn btn-success w-100">
+                                <i class="fas fa-redo me-1"></i>Intentar Nuevamente
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <a href="{% url 'catalogo' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-list me-1"></i>Ver Servicios
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <a href="{% url 'inicio' %}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-home me-1"></i>Ir al Inicio
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Información de contacto -->
+                    <div class="alert alert-info mt-4">
+                        <h6><i class="fas fa-headset me-2"></i>¿Necesitas Ayuda?</h6>
+                        <p class="mb-0">Si continúas teniendo problemas, contáctanos por WhatsApp o email.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Simple error tracking
+document.addEventListener('DOMContentLoaded', function() {
+    // Add shake animation to error icon
+    const errorIcon = document.querySelector('.fa-times-circle');
+    if (errorIcon) {
+        errorIcon.style.animation = 'shake 0.5s ease-in-out';
+    }
+});
+</script>
+
+<style>
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+</style>
+{% endblock %}

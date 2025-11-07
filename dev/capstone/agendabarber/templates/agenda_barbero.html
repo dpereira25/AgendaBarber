@@ -10,6 +10,10 @@
                     <h3 class="mb-0">
                         <i class="fas fa-calendar-alt me-2"></i>Agenda de {{ barbero.nombre }}
                     </h3>
+                    <small class="text-light">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Mostrando solo reservas confirmadas y pagadas
+                    </small>
                 </div>
                 <div class="card-body">
 
@@ -83,6 +87,10 @@
                                             <div class="small text-muted">
                                                 <i class="fas fa-dollar-sign me-1"></i>${{ reserva.servicio.precio|floatformat:0 }}
                                             </div>
+                                            <div class="small">
+                                                <i class="fas fa-credit-card me-1 text-primary"></i>
+                                                <strong>{{ reserva.payment_method|default:"MercadoPago" }}</strong>
+                                            </div>
                                         </div>
                                         <div class="col-md-2">
                                             <div class="text-center">
@@ -95,6 +103,10 @@
                                                 <span class="badge bg-success">
                                                     <i class="fas fa-check me-1"></i>Pagado
                                                 </span>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-credit-card me-1"></i>{{ reserva.payment_method|default:"MercadoPago" }}
+                                                </small>
                                                 {% else %}
                                                 <span class="badge bg-secondary">
                                                     <i class="fas fa-clock me-1"></i>Pendiente
@@ -102,22 +114,25 @@
                                                 {% endif %}
 
                                                 <!-- Acciones rápidas -->
-                                                {% if reserva.estado == 'Pendiente' %}
-                                                    <div class="mt-2">
+                                                <div class="mt-2">
+                                                    <button class="btn btn-outline-info btn-sm" 
+                                                            onclick="showPaymentDetails('{{ reserva.id }}')" 
+                                                            title="Ver detalles del pago">
+                                                        <i class="fas fa-info-circle"></i>
+                                                    </button>
+                                                    {% if reserva.estado == 'Pendiente' %}
                                                         <button class="btn btn-success btn-sm" onclick="confirmarReserva('{{ reserva.id }}')">
                                                             <i class="fas fa-check"></i>
                                                         </button>
                                                         <button class="btn btn-danger btn-sm" onclick="cancelarReserva('{{ reserva.id }}')">
                                                             <i class="fas fa-times"></i>
                                                         </button>
-                                                    </div>
-                                                {% elif reserva.estado == 'Confirmada' and reserva.inicio|date:'Y-m-d' <= today %}
-                                                    <div class="mt-2">
+                                                    {% elif reserva.estado == 'Confirmada' and reserva.inicio|date:'Y-m-d' <= today %}
                                                         <button class="btn btn-info btn-sm" onclick="completarReserva('{{ reserva.id }}')">
-                                                            <i class="fas fa-check-double"></i> Completar
+                                                            <i class="fas fa-check-double"></i>
                                                         </button>
-                                                    </div>
-                                                {% endif %}
+                                                    {% endif %}
+                                                </div>
                                         </div>
                                     </div>
                                 </div>
@@ -187,6 +202,29 @@
                 </div>
                 {% endif %}
 
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Details Modal -->
+<div class="modal fade" id="paymentDetailsModal" tabindex="-1" aria-labelledby="paymentDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="paymentDetailsModalLabel">
+                    <i class="fas fa-credit-card me-2"></i>Detalles del Pago
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="paymentDetailsContent">
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                    <p class="mt-2">Cargando detalles del pago...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -309,6 +347,150 @@
             // Implementar lógica AJAX
             alert('Funcionalidad pendiente de implementar');
         }
+    }
+
+    function showPaymentDetails(reservaId) {
+        const modal = new bootstrap.Modal(document.getElementById('paymentDetailsModal'));
+        const content = document.getElementById('paymentDetailsContent');
+        
+        // Show loading state
+        content.innerHTML = `
+            <div class="text-center">
+                <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                <p class="mt-2">Cargando detalles del pago...</p>
+            </div>
+        `;
+        
+        modal.show();
+        
+        // Fetch payment details
+        fetch(`/api/reserva/${reservaId}/payment-details/`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                content.innerHTML = generatePaymentDetailsHTML(data.payment_details, data.reserva);
+            } else {
+                content.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${data.message || 'No se pudieron cargar los detalles del pago'}
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching payment details:', error);
+            content.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Error al cargar los detalles del pago. Inténtalo de nuevo.
+                </div>
+            `;
+        });
+    }
+
+    function generatePaymentDetailsHTML(paymentDetails, reserva) {
+        const paymentStatusBadge = paymentDetails.status === 'approved' ? 
+            '<span class="badge bg-success">Aprobado</span>' :
+            paymentDetails.status === 'pending' ? 
+            '<span class="badge bg-warning">Pendiente</span>' :
+            '<span class="badge bg-danger">Rechazado</span>';
+
+        return `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title text-primary">
+                                <i class="fas fa-info-circle me-1"></i>Información de la Reserva
+                            </h6>
+                            <hr>
+                            <p class="mb-2">
+                                <strong><i class="fas fa-user me-2 text-primary"></i>Cliente:</strong>
+                                ${reserva.cliente_nombre}
+                            </p>
+                            <p class="mb-2">
+                                <strong><i class="fas fa-envelope me-2 text-info"></i>Email:</strong>
+                                ${reserva.cliente_email}
+                            </p>
+                            <p class="mb-2">
+                                <strong><i class="fas fa-scissors me-2 text-success"></i>Servicio:</strong>
+                                ${reserva.servicio_nombre}
+                            </p>
+                            <p class="mb-2">
+                                <strong><i class="fas fa-calendar me-2 text-warning"></i>Fecha:</strong>
+                                ${reserva.fecha_formateada}
+                            </p>
+                            <p class="mb-0">
+                                <strong><i class="fas fa-clock me-2 text-secondary"></i>Hora:</strong>
+                                ${reserva.hora_inicio} - ${reserva.hora_fin}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title text-success">
+                                <i class="fas fa-credit-card me-1"></i>Detalles del Pago
+                            </h6>
+                            <hr>
+                            <p class="mb-2">
+                                <strong><i class="fas fa-dollar-sign me-2 text-success"></i>Monto:</strong>
+                                $${paymentDetails.amount}
+                            </p>
+                            <p class="mb-2">
+                                <strong><i class="fas fa-credit-card me-2 text-primary"></i>Método:</strong>
+                                ${paymentDetails.payment_method || 'MercadoPago'}
+                            </p>
+                            <p class="mb-2">
+                                <strong><i class="fas fa-check-circle me-2 text-info"></i>Estado:</strong>
+                                ${paymentStatusBadge}
+                            </p>
+                            ${paymentDetails.mp_payment_id ? `
+                            <p class="mb-2">
+                                <strong><i class="fas fa-receipt me-2 text-warning"></i>ID MercadoPago:</strong>
+                                <code>${paymentDetails.mp_payment_id}</code>
+                            </p>
+                            ` : ''}
+                            <p class="mb-2">
+                                <strong><i class="fas fa-calendar-plus me-2 text-secondary"></i>Fecha Pago:</strong>
+                                ${paymentDetails.created_at}
+                            </p>
+                            ${paymentDetails.updated_at !== paymentDetails.created_at ? `
+                            <p class="mb-0">
+                                <strong><i class="fas fa-sync me-2 text-info"></i>Última Actualización:</strong>
+                                ${paymentDetails.updated_at}
+                            </p>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            ${paymentDetails.status === 'approved' ? `
+            <div class="alert alert-success mt-3">
+                <h6><i class="fas fa-check-circle me-2"></i>Pago Confirmado</h6>
+                <p class="mb-0">El pago ha sido procesado exitosamente. La reserva está confirmada y pagada.</p>
+            </div>
+            ` : paymentDetails.status === 'pending' ? `
+            <div class="alert alert-warning mt-3">
+                <h6><i class="fas fa-hourglass-half me-2"></i>Pago Pendiente</h6>
+                <p class="mb-0">El pago está siendo procesado. La reserva se confirmará automáticamente una vez que se complete.</p>
+            </div>
+            ` : `
+            <div class="alert alert-danger mt-3">
+                <h6><i class="fas fa-times-circle me-2"></i>Pago Rechazado</h6>
+                <p class="mb-0">El pago no pudo ser procesado. La reserva no está confirmada.</p>
+            </div>
+            `}
+        `;
     }
 
     // Función para obtener el token CSRF

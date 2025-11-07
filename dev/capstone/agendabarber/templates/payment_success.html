@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-success">
+                <div class="card-header bg-success text-white text-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-check-circle fa-2x mb-2"></i><br>
+                        ¡Pago Exitoso!
+                    </h3>
+                </div>
+                <div class="card-body text-center">
+                    <div class="alert alert-success border-0 bg-light">
+                        <h4 class="text-success mb-3">
+                            <i class="fas fa-calendar-check me-2"></i>
+                            Tu reserva ha sido confirmada
+                        </h4>
+                        <p class="mb-0">El pago se procesó correctamente y tu reserva está confirmada.</p>
+                    </div>
+
+                    {% if reserva %}
+                    <!-- Detalles de la reserva -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title text-primary">
+                                        <i class="fas fa-info-circle me-1"></i>Detalles de la Reserva
+                                    </h6>
+                                    <hr>
+                                    <div class="text-start">
+                                        <p class="mb-2">
+                                            <strong><i class="fas fa-user-tie me-2 text-primary"></i>Barbero:</strong>
+                                            {{ reserva.barbero.nombre }}
+                                        </p>
+                                        <p class="mb-2">
+                                            <strong><i class="fas fa-scissors me-2 text-success"></i>Servicio:</strong>
+                                            {{ reserva.servicio.nombre }}
+                                        </p>
+                                        <p class="mb-2">
+                                            <strong><i class="fas fa-calendar me-2 text-info"></i>Fecha:</strong>
+                                            {{ reserva.inicio|date:"l, d \d\e F \d\e Y" }}
+                                        </p>
+                                        <p class="mb-2">
+                                            <strong><i class="fas fa-clock me-2 text-warning"></i>Hora:</strong>
+                                            {{ reserva.inicio|date:"H:i" }} - {{ reserva.fin|date:"H:i" }}
+                                        </p>
+                                        <p class="mb-0">
+                                            <strong><i class="fas fa-hourglass-half me-2 text-secondary"></i>Duración:</strong>
+                                            {{ reserva.servicio.duracion_minutos }} minutos
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title text-success">
+                                        <i class="fas fa-credit-card me-1"></i>Información del Pago
+                                    </h6>
+                                    <hr>
+                                    <div class="text-start">
+                                        <p class="mb-2">
+                                            <strong><i class="fas fa-dollar-sign me-2 text-success"></i>Monto:</strong>
+                                            ${{ reserva.servicio.precio|floatformat:0 }}
+                                        </p>
+                                        <p class="mb-2">
+                                            <strong><i class="fas fa-credit-card me-2 text-primary"></i>Método:</strong>
+                                            {{ reserva.payment_method|default:"MercadoPago" }}
+                                        </p>
+                                        <p class="mb-2">
+                                            <strong><i class="fas fa-check-circle me-2 text-success"></i>Estado:</strong>
+                                            <span class="badge bg-success">Pagado</span>
+                                        </p>
+                                        {% if payment_id %}
+                                        <p class="mb-0">
+                                            <strong><i class="fas fa-receipt me-2 text-info"></i>ID Pago:</strong>
+                                            <code>{{ payment_id }}</code>
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información adicional -->
+                    <div class="alert alert-info mt-4">
+                        <h6><i class="fas fa-info-circle me-2"></i>Información Importante</h6>
+                        <ul class="list-unstyled mb-0 text-start">
+                            <li><i class="fas fa-envelope me-2"></i>Recibirás un email de confirmación en breve</li>
+                            <li><i class="fas fa-calendar-alt me-2"></i>Puedes ver tu reserva en "Mis Reservas"</li>
+                            <li><i class="fas fa-phone me-2"></i>Si necesitas cambios, contacta al barbero</li>
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- Acciones -->
+                    <div class="row mt-4">
+                        <div class="col-md-4 mb-2">
+                            <a href="{% url 'mis_reservas' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-list me-1"></i>Ver Mis Reservas
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <a href="{% url 'crear_reserva' %}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-plus me-1"></i>Nueva Reserva
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <a href="{% url 'inicio' %}" class="btn btn-primary w-100">
+                                <i class="fas fa-home me-1"></i>Ir al Inicio
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show success animation
+document.addEventListener('DOMContentLoaded', function() {
+    const successIcon = document.querySelector('.fa-check-circle');
+    if (successIcon) {
+        successIcon.style.animation = 'pulse 2s infinite';
+    }
+});
+</script>
+
+<style>
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+</style>
+{% endblock %}

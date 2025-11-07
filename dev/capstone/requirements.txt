@@ -9,6 +9,7 @@ idna==3.4
 Jinja2==3.1.2
 MarkupSafe==2.1.3
 marshmallow==3.17.0
+mercadopago==2.2.0
 numpy==1.26.2
 packaging==24.0
 pillow==10.3.0

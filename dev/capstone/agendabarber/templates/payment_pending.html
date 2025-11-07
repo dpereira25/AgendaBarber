@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-warning">
+                <div class="card-header bg-warning text-dark text-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-hourglass-half fa-2x mb-2"></i><br>
+                        Pago Pendiente
+                    </h3>
+                </div>
+                <div class="card-body text-center">
+                    <div class="alert alert-warning border-0 bg-light">
+                        <h4 class="text-warning mb-3">
+                            <i class="fas fa-clock me-2"></i>
+                            Tu pago está siendo procesado
+                        </h4>
+                        <p class="mb-0">Estamos esperando la confirmación del pago. Tu reserva se confirmará automáticamente una vez que se complete el proceso.</p>
+                    </div>
+
+                    <!-- Status indicator -->
+                    <div class="card bg-light mt-4">
+                        <div class="card-body">
+                            <h6 class="card-title text-info">
+                                <i class="fas fa-info-circle me-1"></i>Estado Actual
+                            </h6>
+                            <hr>
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <div class="progress" style="height: 25px;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" 
+                                             role="progressbar" style="width: 75%">
+                                            Procesando Pago...
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <span class="badge bg-warning text-dark fs-6">
+                                        <i class="fas fa-spinner fa-spin me-1"></i>En Proceso
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if temp_reservation %}
+                    <!-- Detalles de la reserva temporal -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title text-primary">
+                                        <i class="fas fa-calendar-alt me-1"></i>Detalles de la Reserva
+                                    </h6>
+                                    <hr>
+                                    <div class="text-start">
+                                        <p class="mb-2">
+                                            <strong><i class="fas fa-user-tie me-2 text-primary"></i>Barbero:</strong>
+                                            {{ temp_reservation.barbero.nombre }}
+                                        </p>
+                                        <p class="mb-2">
+                                            <strong><i class="fas fa-scissors me-2 text-success"></i>Servicio:</strong>
+                                            {{ temp_reservation.servicio.nombre }}
+                                        </p>
+                                        <p class="mb-2">
+                                            <strong><i class="fas fa-calendar me-2 text-info"></i>Fecha:</strong>
+                                            {{ temp_reservation.inicio|date:"l, d \d\e F \d\e Y" }}
+                                        </p>
+                                        <p class="mb-0">
+                                            <strong><i class="fas fa-clock me-2 text-warning"></i>Hora:</strong>
+                                            {{ temp_reservation.inicio|date:"H:i" }} - {{ temp_reservation.fin|date:"H:i" }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title text-warning">
+                                        <i class="fas fa-shield-alt me-1"></i>Reserva Protegida
+                                    </h6>
+                                    <hr>
+                                    <div class="text-start">
+                                        <p class="mb-2">
+                                            <strong><i class="fas fa-lock me-2 text-success"></i>Estado:</strong>
+                                            <span class="badge bg-warning text-dark">Bloqueada Temporalmente</span>
+                                        </p>
+                                        <p class="mb-2">
+                                            <strong><i class="fas fa-dollar-sign me-2 text-success"></i>Monto:</strong>
+                                            ${{ temp_reservation.servicio.precio|floatformat:0 }}
+                                        </p>
+                                        {% if payment_id %}
+                                        <p class="mb-2">
+                                            <strong><i class="fas fa-receipt me-2 text-info"></i>ID Pago:</strong>
+                                            <code>{{ payment_id }}</code>
+                                        </p>
+                                        {% endif %}
+                                        <p class="mb-0">
+                                            <strong><i class="fas fa-hourglass-end me-2 text-warning"></i>Expira:</strong>
+                                            <span id="countdown">{{ temp_reservation.expires_at|date:"H:i" }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Información sobre pagos pendientes -->
+                    <div class="card bg-light mt-4">
+                        <div class="card-body">
+                            <h6 class="card-title text-info">
+                                <i class="fas fa-question-circle me-1"></i>¿Por qué está pendiente mi pago?
+                            </h6>
+                            <hr>
+                            <div class="row text-start">
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-university me-2 text-info"></i>Transferencia bancaria en proceso</li>
+                                        <li><i class="fas fa-money-bill me-2 text-success"></i>Pago en efectivo (Rapipago, Pago Fácil)</li>
+                                        <li><i class="fas fa-credit-card me-2 text-primary"></i>Verificación adicional de seguridad</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-shield-alt me-2 text-warning"></i>Validación antifraude</li>
+                                        <li><i class="fas fa-clock me-2 text-secondary"></i>Procesamiento del banco emisor</li>
+                                        <li><i class="fas fa-sync me-2 text-info"></i>Sincronización entre sistemas</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Auto-refresh info -->
+                    <div class="alert alert-info mt-4">
+                        <h6><i class="fas fa-sync-alt me-2"></i>Actualización Automática</h6>
+                        <p class="mb-2">Esta página se actualizará automáticamente cada 30 segundos para verificar el estado del pago.</p>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-info" id="refreshProgress" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <small class="text-muted">Próxima actualización en: <span id="refreshTimer">30</span> segundos</small>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div class="row mt-4">
+                        <div class="col-md-3 mb-2">
+                            <button onclick="checkPaymentStatus()" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-sync me-1"></i>Verificar Ahora
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'mis_reservas' %}" class="btn btn-outline-info w-100">
+                                <i class="fas fa-list me-1"></i>Mis Reservas
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'catalogo' %}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-cut me-1"></i>Ver Servicios
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'inicio' %}" class="btn btn-outline-dark w-100">
+                                <i class="fas fa-home me-1"></i>Ir al Inicio
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Información de contacto -->
+                    <div class="alert alert-light mt-4 border">
+                        <h6><i class="fas fa-headset me-2"></i>¿Necesitas Ayuda?</h6>
+                        <p class="mb-0">Si tu pago sigue pendiente después de 24 horas, contáctanos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let refreshInterval;
+let countdownInterval;
+let refreshSeconds = 30;
+
+document.addEventListener('DOMContentLoaded', function() {
+    startRefreshCountdown();
+    
+    // Auto-refresh every 30 seconds
+    refreshInterval = setInterval(function() {
+        checkPaymentStatus();
+    }, 30000);
+});
+
+function startRefreshCountdown() {
+    refreshSeconds = 30;
+    const progressBar = document.getElementById('refreshProgress');
+    const timer = document.getElementById('refreshTimer');
+    
+    countdownInterval = setInterval(function() {
+        refreshSeconds--;
+        const percentage = ((30 - refreshSeconds) / 30) * 100;
+        
+        progressBar.style.width = percentage + '%';
+        timer.textContent = refreshSeconds;
+        
+        if (refreshSeconds <= 0) {
+            clearInterval(countdownInterval);
+            startRefreshCountdown();
+        }
+    }, 1000);
+}
+
+function checkPaymentStatus() {
+    const button = event ? event.target : document.querySelector('button');
+    const originalText = button.innerHTML;
+    
+    // Show loading state
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Verificando...';
+    button.disabled = true;
+    
+    // Make AJAX request to check payment status
+    fetch(window.location.href + '?check_status=1', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'approved') {
+            // Payment approved - redirect to success page
+            window.location.href = data.redirect_url;
+        } else if (data.status === 'rejected') {
+            // Payment rejected - redirect to failure page
+            window.location.href = data.redirect_url;
+        } else {
+            // Still pending - restore button
+            button.innerHTML = originalText;
+            button.disabled = false;
+            
+            // Show updated info if available
+            if (data.message) {
+                showAlert('info', data.message);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error checking payment status:', error);
+        button.innerHTML = originalText;
+        button.disabled = false;
+        showAlert('warning', 'Error al verificar el estado del pago. Inténtalo de nuevo.');
+    });
+}
+
+function showAlert(type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : 
+                     type === 'warning' ? 'alert-warning' : 'alert-info';
+    const iconClass = type === 'success' ? 'fa-check-circle' : 
+                     type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+    
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show mt-3" role="alert">
+            <i class="fas ${iconClass} me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    const cardBody = document.querySelector('.card-body');
+    cardBody.insertAdjacentHTML('beforeend', alertHtml);
+}
+
+// Cleanup intervals when leaving page
+window.addEventListener('beforeunload', function() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    if (countdownInterval) clearInterval(countdownInterval);
+});
+</script>
+{% endblock %}

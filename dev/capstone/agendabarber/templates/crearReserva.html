@@ -28,6 +28,20 @@
                     </div>
                     {% endif %}
 
+                    <!-- Payment flow info -->
+                    <div class="alert alert-info border-0 bg-light mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h6 class="mb-1"><i class="fas fa-info-circle me-2"></i>Proceso de Reserva con Pago</h6>
+                                <p class="mb-0 small">Al hacer clic en "Proceder al Pago", serás redirigido a MercadoPago para completar el pago de forma segura. Tu reserva se confirmará automáticamente una vez que el pago sea aprobado.</p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <i class="fas fa-shield-alt text-success fa-2x"></i>
+                                <div class="small text-muted mt-1">Pago 100% Seguro</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <form method="post" id="reservaForm">
                         {% csrf_token %}
 
@@ -76,6 +90,7 @@
                                     <option value="">Selecciona fecha y barbero primero</option>
                                 </select>
                                 {{ form.hora }}
+                                <!-- Verificar que el campo hidden se renderiza correctamente -->
                                 <div id="horario-sugerencia" class="form-text">
                                     <i class="fas fa-info-circle me-1"></i>Las horas se cargarán según disponibilidad
                                 </div>
@@ -84,6 +99,8 @@
                                 {% endif %}
                             </div>
                         </div>
+
+                        <!-- Email no necesario - se usa el del usuario logueado -->
 
                         <!-- Info de horarios mejorada -->
                         <div class="alert alert-info border-0 bg-light">
@@ -110,8 +127,13 @@
                             <a href="{% url 'inicio' %}" class="btn btn-outline-secondary">
                                 <i class="fas fa-arrow-left me-1"></i>Volver al inicio
                             </a>
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-check me-1"></i>Crear Reserva
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                <span id="submitText">
+                                    <i class="fas fa-credit-card me-1"></i>Proceder al Pago
+                                </span>
+                                <span id="loadingText" style="display: none;">
+                                    <i class="fas fa-spinner fa-spin me-1"></i>Redirigiendo a MercadoPago...
+                                </span>
                             </button>
                         </div>
                     </form>
@@ -124,8 +146,76 @@
 <!-- JavaScript de validación de reservas -->
 <script src="{% static 'agendabarber/js/reserva-validation.js' %}?v=2.0"></script>
 
-<!-- Test adicional para verificar carga -->
+<!-- Payment form handling -->
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('reservaForm');
+    
+    // Email field removed - using logged user's email automatically
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    const loadingText = document.getElementById('loadingText');
+    
+    form.addEventListener('submit', function(e) {
+        console.log('🚀 Formulario enviándose...');
+        
+        // Verificar que todos los campos estén llenos antes de mostrar loading
+        const requiredFields = form.querySelectorAll('[required]');
+        let allValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value) {
+                allValid = false;
+                console.error('❌ Campo requerido vacío:', field.name || field.id);
+            }
+        });
+        
+        if (!allValid) {
+            console.error('❌ Formulario inválido, no mostrando loading');
+            return; // Dejar que la validación HTML5 maneje los errores
+        }
+        
+        console.log('✅ Formulario válido, mostrando loading...');
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        submitText.style.display = 'none';
+        loadingText.style.display = 'inline';
+        
+        // Add a small delay to show the loading state
+        setTimeout(function() {
+            console.log('⏳ Enviando formulario después del delay...');
+            // The form will submit normally after this delay
+            // The server will handle the redirect to MercadoPago
+        }, 500);
+    });
+    
+    // Handle form validation errors - restore button state
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            // Page was loaded from cache (back button)
+            submitBtn.disabled = false;
+            submitText.style.display = 'inline';
+            loadingText.style.display = 'none';
+        }
+    });
+});
+
+// Enhanced validation messages for payment flow
+function showPaymentValidationError(message) {
+    const alertHtml = `
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Validación de Pago:</strong> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    const form = document.getElementById('reservaForm');
+    form.insertAdjacentHTML('beforebegin', alertHtml);
+}
+
+// Test adicional para verificar carga
 console.log('🔍 Verificando carga de JavaScript...');
 setTimeout(function() {
     console.log('⏰ Verificación después de 1 segundo');

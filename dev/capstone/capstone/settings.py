@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,7 +30,19 @@ SECRET_KEY = 'django-insecure--6_)n2&#eagrb2h9co*2&o3%&ohqi4%#aqwx^#a0ldq8k@w=wd
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'unslippery-unruffledly-raylan.ngrok-free.dev']
+
+# CSRF Configuration for ngrok
+CSRF_TRUSTED_ORIGINS = [
+    'https://unslippery-unruffledly-raylan.ngrok-free.dev',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000'
+]
+
+# Session Configuration for external redirects
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_SAMESITE = 'Lax'  # Allow cross-site requests from MercadoPago
+SESSION_SAVE_EVERY_REQUEST = True  # Keep session active
 
 
 # Application definition
@@ -150,3 +166,35 @@ LOGOUT_REDIRECT_URL = 'inicio'
 
 # Nombre de la URL para la página de login. Usamos 'login' que es la que Django genera
 LOGIN_URL = 'login'
+
+# ----------------------------------------------------------------------
+# 💳 CONFIGURACIÓN DE MERCADOPAGO
+# ----------------------------------------------------------------------
+
+# MercadoPago Credentials
+MERCADOPAGO_ACCESS_TOKEN = os.getenv('MERCADOPAGO_ACCESS_TOKEN')
+MERCADOPAGO_PUBLIC_KEY = os.getenv('MERCADOPAGO_PUBLIC_KEY')
+MERCADOPAGO_WEBHOOK_SECRET = os.getenv('MERCADOPAGO_WEBHOOK_SECRET')
+
+# MercadoPago Environment (True for sandbox, False for production)
+MERCADOPAGO_SANDBOX = os.getenv('MERCADOPAGO_SANDBOX', 'True').lower() == 'true'
+
+# MercadoPago URLs
+MERCADOPAGO_SUCCESS_URL = os.getenv('MERCADOPAGO_SUCCESS_URL', 'http://localhost:8000/payment/success/')
+MERCADOPAGO_FAILURE_URL = os.getenv('MERCADOPAGO_FAILURE_URL', 'http://localhost:8000/payment/failure/')
+MERCADOPAGO_PENDING_URL = os.getenv('MERCADOPAGO_PENDING_URL', 'http://localhost:8000/payment/pending/')
+MERCADOPAGO_WEBHOOK_URL = os.getenv('MERCADOPAGO_WEBHOOK_URL', 'http://localhost:8000/webhooks/mercadopago/')
+
+# Validation for required MercadoPago settings
+if not MERCADOPAGO_ACCESS_TOKEN:
+    raise ValueError("MERCADOPAGO_ACCESS_TOKEN environment variable is required")
+
+# Note: MercadoPago Chile can generate test credentials that start with APP_USR-
+# So we'll be more flexible with the validation
+if MERCADOPAGO_SANDBOX:
+    # Accept both TEST- and APP_USR- for sandbox mode (Chile specific)
+    if not (MERCADOPAGO_ACCESS_TOKEN.startswith('TEST-') or MERCADOPAGO_ACCESS_TOKEN.startswith('APP_USR-')):
+        raise ValueError("MERCADOPAGO_ACCESS_TOKEN must start with 'TEST-' or 'APP_USR-' when MERCADOPAGO_SANDBOX is True")
+
+if not MERCADOPAGO_SANDBOX and not MERCADOPAGO_ACCESS_TOKEN.startswith('APP_USR-'):
+    raise ValueError("MERCADOPAGO_ACCESS_TOKEN must start with 'APP_USR-' when MERCADOPAGO_SANDBOX is False")
