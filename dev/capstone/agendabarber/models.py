@@ -3,6 +3,16 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
 
+# Forzar importación de Pillow para Django
+try:
+    from PIL import Image
+    import PIL
+    # Forzar que Django detecte Pillow
+    import django.core.files.images
+    PILLOW_AVAILABLE = True
+except ImportError:
+    PILLOW_AVAILABLE = False
+
 # Define los estados posibles de una reserva para mejor control
 ESTADO_CHOICES = [
     ('Pendiente', 'Pendiente'),

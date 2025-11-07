@@ -4,45 +4,67 @@
 {% block title %}Catálogo de Servicios{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <h1 class="text-center mb-5">Catálogo Completo de Servicios 💈</h1>
-
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 g-4">
-
-        {% for servicio in servicios %}
-        <div class="col">
-            <div class="card h-100 bg-white">
-
-                <div class="ratio ratio-4x3">
-                    {% if servicio.imagen %}
-                    <img src="{{ servicio.imagen.url }}" class="card-img-top w-100 h-100" alt="{{ servicio.nombre }}"
-                        style="object-fit: cover; border-radius: .375rem .375rem 0 0;">
-                    {% else %}
-                    <img src="{% static 'agendabarber/img/default.jpg' %}" class="card-img-top w-100 h-100"
-                        alt="Sin imagen" style="object-fit: cover; border-radius: .375rem .375rem 0 0;">
-                    {% endif %}
-                </div>
-
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title text-primary">{{ servicio.nombre }}</h5>
-                    <p class="h4 text-danger mt-auto">${{ servicio.precio }}</p>
-                    <p class="card-text small text-muted">
-                        {{ servicio.descripcion|truncatewords:10 }}
+<section class="services-section">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="gradient-text">Catálogo Completo de Servicios</span>
+                    </h2>
+                    <p class="section-subtitle">
+                        Descubre todos nuestros servicios profesionales
                     </p>
-                </div>
-
-                <div class="card-footer bg-white border-0 pt-0">
-                    <a href="{% url 'crear_reserva' %}?servicio_id={{ servicio.id }}" class="btn btn-dark w-100">
-                        Agendar
-                    </a>
+                    <div class="section-divider"></div>
                 </div>
             </div>
         </div>
-        {% empty %}
-        <div class="col-12 text-center text-muted mt-4">
-            <p>No hay servicios disponibles aún.</p>
+
+        <div class="services-grid">
+            {% for servicio in servicios %}
+            <div class="service-card-wrapper" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:100 }}">
+                <div class="service-card">
+                    <div class="service-image-container">
+                        {% if servicio.imagen %}
+                        <img src="{{ servicio.imagen.url }}" class="service-image" alt="{{ servicio.nombre }}">
+                        {% else %}
+                        <img src="{% static 'agendabarber/img/default.jpg' %}" class="service-image" alt="Sin imagen">
+                        {% endif %}
+                        <div class="service-overlay">
+                            <div class="service-price">
+                                <span class="price-currency">$</span>
+                                <span class="price-amount">{{ servicio.precio }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="service-content">
+                        <h3 class="service-title">{{ servicio.nombre }}</h3>
+                        <p class="service-description">
+                            {{ servicio.descripcion|truncatewords:12 }}
+                        </p>
+                        <div class="service-duration">
+                            <i class="fas fa-clock"></i>
+                            <span>{{ servicio.duracion_minutos }} minutos</span>
+                        </div>
+                    </div>
+                    
+                    <div class="service-footer">
+                        <a href="{% url 'crear_reserva' %}?servicio_id={{ servicio.id }}" class="btn-service-book">
+                            <span>Reservar Ahora</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-5">
+                <i class="fas fa-cut fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No hay servicios disponibles</h4>
+                <p class="text-muted">Pronto tendremos nuevos servicios para ti</p>
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
-</div>
+</section>
 {% endblock %}

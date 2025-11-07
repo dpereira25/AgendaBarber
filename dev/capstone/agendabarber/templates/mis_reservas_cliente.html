@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<div class="container my-5">
+<div class="container my-5" style="max-width: 1200px;"></div>
     <div class="row">
         <div class="col-12">
             <div class="card shadow">
@@ -11,10 +11,10 @@
                         <i class="fas fa-calendar-check me-2"></i>Mis Reservas
                     </h3>
                 </div>
-                <div class="card-body">
+                <div class="card-body" style="padding: 3rem 4rem;">
 
                     {% if reservas %}
-                    <div class="row">
+                    <div class="row" style="margin-left: -1rem; margin-right: -1rem;">
                         {% for reserva in reservas %}
                         <div class="col-md-6 col-lg-4 mb-4">
                             <div

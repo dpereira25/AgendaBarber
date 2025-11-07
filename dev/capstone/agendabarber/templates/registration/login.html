@@ -1,39 +1,97 @@
 {% extends "base.html" %}
-{% block title %}Iniciar Sesión{% endblock %}
+{% block title %}Iniciar Sesión - Agenda Barber{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-4">
-        <h2 class="mb-4 text-center">Iniciar Sesión</h2>
-        
-        {% if form.non_field_errors %}
-            <div class="alert alert-danger">
-                {% for error in form.non_field_errors %}
-                    {{ error }}
-                {% endfor %}
-            </div>
-        {% endif %}
+</div> <!-- Cerrar el main -->
 
-        <form method="post" action="{% url 'login' %}">
-            {% csrf_token %}
-            
-            <div class="mb-3">
-                <label for="id_username" class="form-label">Nombre de usuario:</label>
-                <input type="text" name="username" id="id_username" class="form-control" required>
+<div class="auth-container-wide">
+    <div class="container-fluid">
+        <div class="row align-items-center" style="min-height: calc(100vh - 60px);">
+            <div class="col-lg-6 d-none d-lg-block">
+                <div class="auth-hero">
+                    <div class="auth-hero-content">
+                        <h2 class="auth-hero-title">
+                            <span class="gradient-text">Bienvenido de vuelta</span>
+                        </h2>
+                        <p class="auth-hero-subtitle">
+                            Accede a tu cuenta y gestiona tus reservas de manera fácil y rápida
+                        </p>
+                        <div class="auth-hero-features">
+                            <div class="feature-item">
+                                <i class="fas fa-calendar-check"></i>
+                                <span>Gestiona tus citas</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-clock"></i>
+                                <span>Reservas en tiempo real</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-user-tie"></i>
+                                <span>Barberos profesionales</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="mb-3">
-                <label for="id_password" class="form-label">Contraseña:</label>
-                <input type="password" name="password" id="id_password" class="form-control" required>
+            <div class="col-lg-6">
+                <div class="auth-form-container">
+                    <div class="auth-form">
+                        <div class="text-center mb-4">
+                            <h1 class="gradient-text mb-3">Iniciar Sesión</h1>
+                            <div class="barber-icon" style="font-size: 2rem; margin-bottom: 1rem;">💈</div>
+                        </div>
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger text-center">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <form method="post" action="{% url 'login' %}">
+                            {% csrf_token %}
+                            
+                            <div class="form-group">
+                                <label for="id_username" class="form-label">
+                                    <i class="fas fa-user me-2"></i>Nombre de usuario:
+                                </label>
+                                <input type="text" name="username" id="id_username" class="form-control" 
+                                       placeholder="Ingresa tu usuario" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="id_password" class="form-label">
+                                    <i class="fas fa-lock me-2"></i>Contraseña:
+                                </label>
+                                <input type="password" name="password" id="id_password" class="form-control" 
+                                       placeholder="Ingresa tu contraseña" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt me-2"></i>Ingresar
+                            </button>
+                        </form>
+                        
+                        <div class="text-center mt-4">
+                            <div class="form-text">
+                                ¿No tienes cuenta? 
+                                <a href="{% url 'registro' %}" class="text-decoration-none">
+                                    <strong>Regístrate aquí</strong>
+                                </a>
+                            </div>
+                            <div class="form-text mt-2">
+                                <a href="{% url 'password_reset' %}" class="text-decoration-none">
+                                    ¿Olvidaste tu contraseña?
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <button type="submit" class="btn btn-primary w-100">Ingresar</button>
-        </form>
-        
-        <div class="text-center mt-3">
-            <p>¿No tienes cuenta? <a href="{% url 'registro' %}">Regístrate aquí</a></p>
-            <p><a href="{% url 'password_reset' %}">¿Olvidaste tu contraseña?</a></p>
         </div>
     </div>
 </div>
+
+<div class="container"> <!-- Reabrir para el resto del contenido -->
 {% endblock %}
