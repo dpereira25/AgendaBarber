@@ -185,16 +185,17 @@ MERCADOPAGO_FAILURE_URL = os.getenv('MERCADOPAGO_FAILURE_URL', 'http://localhost
 MERCADOPAGO_PENDING_URL = os.getenv('MERCADOPAGO_PENDING_URL', 'http://localhost:8000/payment/pending/')
 MERCADOPAGO_WEBHOOK_URL = os.getenv('MERCADOPAGO_WEBHOOK_URL', 'http://localhost:8000/webhooks/mercadopago/')
 
-# Validation for required MercadoPago settings
-if not MERCADOPAGO_ACCESS_TOKEN:
+# Validation for required MercadoPago settings (only in production)
+if not DEBUG and not MERCADOPAGO_ACCESS_TOKEN:
     raise ValueError("MERCADOPAGO_ACCESS_TOKEN environment variable is required")
 
 # Note: MercadoPago Chile can generate test credentials that start with APP_USR-
 # So we'll be more flexible with the validation
-if MERCADOPAGO_SANDBOX:
-    # Accept both TEST- and APP_USR- for sandbox mode (Chile specific)
-    if not (MERCADOPAGO_ACCESS_TOKEN.startswith('TEST-') or MERCADOPAGO_ACCESS_TOKEN.startswith('APP_USR-')):
-        raise ValueError("MERCADOPAGO_ACCESS_TOKEN must start with 'TEST-' or 'APP_USR-' when MERCADOPAGO_SANDBOX is True")
+if MERCADOPAGO_ACCESS_TOKEN:  # Only validate if token exists
+    if MERCADOPAGO_SANDBOX:
+        # Accept both TEST- and APP_USR- for sandbox mode (Chile specific)
+        if not (MERCADOPAGO_ACCESS_TOKEN.startswith('TEST-') or MERCADOPAGO_ACCESS_TOKEN.startswith('APP_USR-')):
+            raise ValueError("MERCADOPAGO_ACCESS_TOKEN must start with 'TEST-' or 'APP_USR-' when MERCADOPAGO_SANDBOX is True")
 
-if not MERCADOPAGO_SANDBOX and not MERCADOPAGO_ACCESS_TOKEN.startswith('APP_USR-'):
-    raise ValueError("MERCADOPAGO_ACCESS_TOKEN must start with 'APP_USR-' when MERCADOPAGO_SANDBOX is False")
+    if not MERCADOPAGO_SANDBOX and not MERCADOPAGO_ACCESS_TOKEN.startswith('APP_USR-'):
+        raise ValueError("MERCADOPAGO_ACCESS_TOKEN must start with 'APP_USR-' when MERCADOPAGO_SANDBOX is False")

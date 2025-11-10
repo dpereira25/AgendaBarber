@@ -405,14 +405,38 @@ def crearReserva(request):
             except MercadoPagoServiceError as e:
                 # Use user-friendly message if available
                 error_message = getattr(e, 'user_message', str(e))
-                messages.error(request, error_message)
-                logger.error(f"MercadoPago error for user {request.user.id}: {str(e)} (code: {getattr(e, 'error_code', 'unknown')})")
                 
-                # Add specific handling for different error types
-                if getattr(e, 'error_code') == 'expired_reservation':
-                    messages.info(request, 'Puedes intentar crear una nueva reserva.')
-                elif getattr(e, 'error_code') == 'invalid_credentials':
-                    messages.error(request, 'Hay un problema con la configuración del sistema. Por favor contacta al soporte.')
+                # In development mode, provide more helpful messages
+                from django.conf import settings
+                if settings.DEBUG and getattr(e, 'error_code') == 'invalid_credentials':
+                    messages.warning(request, '⚠️ Modo Desarrollo: MercadoPago no está configurado.')
+                    messages.info(request, 'Para configurar MercadoPago, agrega tus credenciales en el archivo .env')
+                    messages.info(request, 'Por ahora, la reserva se creará sin pago para pruebas.')
+                    
+                    # In development, create the reservation directly without payment
+                    try:
+                        reserva = Reserva.objects.create(
+                            cliente=request.user,
+                            barbero=form.cleaned_data['barbero'],
+                            servicio=form.cleaned_data['servicio'],
+                            inicio=form.cleaned_data['inicio_calculado'],
+                            fin=form.cleaned_data['fin_calculado'],
+                            estado='Confirmada',  # Auto-confirm in development
+                            notas='Reserva creada en modo desarrollo sin pago'
+                        )
+                        messages.success(request, f'✅ Reserva creada exitosamente (modo desarrollo)')
+                        return redirect('confirmacion_reserva')
+                    except Exception as dev_error:
+                        messages.error(request, f'Error al crear reserva de desarrollo: {str(dev_error)}')
+                else:
+                    messages.error(request, error_message)
+                    logger.error(f"MercadoPago error for user {request.user.id}: {str(e)} (code: {getattr(e, 'error_code', 'unknown')})")
+                    
+                    # Add specific handling for different error types
+                    if getattr(e, 'error_code') == 'expired_reservation':
+                        messages.info(request, 'Puedes intentar crear una nueva reserva.')
+                    elif getattr(e, 'error_code') == 'invalid_credentials':
+                        messages.error(request, 'Hay un problema con la configuración del sistema. Por favor contacta al soporte.')
                 
             except ValueError as e:
                 messages.error(request, str(e))

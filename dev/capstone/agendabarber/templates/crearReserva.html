@@ -7,17 +7,17 @@
 
 {% block content %}
 
-<div class="container-fluid my-5 px-4">
+<div class="container my-5">
     <div class="row justify-content-center">
-        <div class="col-12 col-xl-10 col-xxl-8">
-            <div class="card reserva-card-wide shadow-lg">
-                <div class="card-header text-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
                     <h3 class="mb-0"><i class="fas fa-calendar-plus me-2"></i>Nueva Reserva</h3>
                 </div>
                 <div class="card-body">
                     <!-- Progress indicator -->
-                    <div class="progress mb-4" style="height: 8px;">
-                        <div class="progress-bar" role="progressbar" style="width: 25%" id="booking-progress"></div>
+                    <div class="progress mb-4" style="height: 6px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 25%" id="booking-progress"></div>
                     </div>
 
                     {% if messages %}
@@ -38,119 +38,186 @@
                     </div>
                     {% endif %}
 
-                    <!-- Payment flow info -->
-                    <div class="alert alert-info border-0 bg-light mb-4">
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <h6 class="mb-1"><i class="fas fa-info-circle me-2"></i>Proceso de Reserva con Pago</h6>
-                                <p class="mb-0 small">Al hacer clic en "Proceder al Pago", serás redirigido a MercadoPago para completar el pago de forma segura. Tu reserva se confirmará automáticamente una vez que el pago sea aprobado.</p>
-                            </div>
-                            <div class="col-md-4 text-center">
-                                <i class="fas fa-shield-alt text-success fa-2x"></i>
-                                <div class="small text-muted mt-1">Pago 100% Seguro</div>
-                            </div>
-                        </div>
-                    </div>
-
                     <form method="post" id="reservaForm">
                         {% csrf_token %}
 
-                        <!-- Primera fila: Barbero y Servicio -->
-                        <div class="row mb-4">
-                            <div class="col-lg-6 mb-3 mb-lg-0">
-                                <div class="form-group-wide">
-                                    <label class="form-label fw-bold">
-                                        <i class="fas fa-user-tie me-2 text-primary"></i>{{ form.barbero.label }}
-                                    </label>
-                                    {{ form.barbero }}
-                                    {% if form.barbero.errors %}
-                                    <div class="text-danger small mt-1">{{ form.barbero.errors.0 }}</div>
-                                    {% endif %}
+                        <!-- Step 1: Barber and Service Selection -->
+                        <div class="booking-step" id="step-1">
+                            <div class="row">
+                                <div class="col-12 mb-4">
+                                    <div class="form-group-enhanced">
+                                        <label class="form-label fw-bold mb-3">
+                                            <i class="fas fa-user-tie me-2 text-primary"></i>{{ form.barbero.label }}
+                                            <span class="step-indicator">1</span>
+                                        </label>
+                                        
+                                        <!-- Hidden select for form submission -->
+                                        <div style="display: none;">{{ form.barbero }}</div>
+                                        
+                                        <!-- Custom barber cards -->
+                                        <div class="barber-cards-container" id="barber-cards" role="radiogroup" aria-label="Seleccionar barbero">
+                                            {% for barbero in form.barbero.field.queryset %}
+                                            <div class="barber-card" 
+                                                 data-barbero-id="{{ barbero.id }}" 
+                                                 onclick="selectBarber({{ barbero.id }})"
+                                                 onkeydown="handleCardKeydown(event, {{ barbero.id }}, 'barber')"
+                                                 tabindex="0"
+                                                 role="radio"
+                                                 aria-checked="false"
+                                                 aria-label="Barbero {{ barbero.nombre }}, {{ barbero.experiencia }} años de experiencia">
+                                                <div class="barber-card-image">
+                                                    {% if barbero.foto %}
+                                                        <img src="{{ barbero.foto.url }}" alt="{{ barbero.nombre }}" class="barber-photo">
+                                                    {% else %}
+                                                        <div class="barber-photo-placeholder">
+                                                            <i class="fas fa-user-tie"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <div class="barber-card-overlay">
+                                                        <i class="fas fa-check-circle check-icon"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="barber-card-info">
+                                                    <h6 class="barber-name">{{ barbero.nombre }}</h6>
+                                                    <p class="barber-experience">{{ barbero.experiencia }} años de experiencia</p>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        
+                                        {% if form.barbero.errors %}
+                                        <div class="text-danger small mt-1 animated-error">{{ form.barbero.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-check-icon" id="barbero-check" style="display: none;">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="form-group-wide">
-                                    <label class="form-label fw-bold">
-                                        <i class="fas fa-cut me-2 text-primary"></i>{{ form.servicio.label }}
-                                    </label>    
-                                    {{ form.servicio }}
-                                    {% if form.servicio.errors %}
-                                    <div class="text-danger small mt-1">{{ form.servicio.errors.0 }}</div>
-                                    {% endif %}
+
+                                <div class="col-12 mb-4">
+                                    <div class="form-group-enhanced">
+                                        <label class="form-label fw-bold mb-3">
+                                            <i class="fas fa-cut me-2 text-primary"></i>{{ form.servicio.label }}
+                                            <span class="step-indicator">2</span>
+                                        </label>
+                                        
+                                        <!-- Hidden select for form submission -->
+                                        <div style="display: none;">{{ form.servicio }}</div>
+                                        
+                                        <!-- Custom service cards -->
+                                        <div class="service-cards-container" id="service-cards" role="radiogroup" aria-label="Seleccionar servicio">
+                                            {% for servicio in form.servicio.field.queryset %}
+                                            <div class="service-card" 
+                                                 data-service-id="{{ servicio.id }}" 
+                                                 onclick="selectService({{ servicio.id }})"
+                                                 onkeydown="handleCardKeydown(event, {{ servicio.id }}, 'service')"
+                                                 tabindex="0"
+                                                 role="radio"
+                                                 aria-checked="false"
+                                                 aria-label="Servicio {{ servicio.nombre }}, ${{ servicio.precio|floatformat:0 }}, {{ servicio.duracion_minutos }} minutos">
+                                                <div class="service-card-header">
+                                                    <h6 class="service-name">{{ servicio.nombre }}</h6>
+                                                    <span class="service-price">${{ servicio.precio|floatformat:0 }}</span>
+                                                </div>
+                                                <div class="service-duration">
+                                                    <i class="fas fa-clock"></i>
+                                                    <span>{{ servicio.duracion_minutos }} minutos</span>
+                                                </div>
+                                                {% if servicio.descripcion %}
+                                                <p class="service-description">{{ servicio.descripcion|truncatewords:10 }}</p>
+                                                {% endif %}
+                                                <div class="service-card-overlay">
+                                                    <i class="fas fa-check-circle check-icon"></i>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        
+                                        {% if form.servicio.errors %}
+                                        <div class="text-danger small mt-1 animated-error">{{ form.servicio.errors.0 }}</div>
+                                        {% endif %}
+                                        <div id="servicio-info" class="mt-2 service-info-container"></div>
+                                        <div class="form-check-icon" id="servicio-check" style="display: none;">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Segunda fila: Fecha y Hora -->
-                        <div class="row mb-4">
-                            <div class="col-lg-6 mb-3 mb-lg-0">
-                                <div class="form-group-wide">
-                                    <label class="form-label fw-bold">
-                                        <i class="fas fa-calendar me-2 text-primary"></i>{{ form.fecha.label }}
-                                    </label>
-                                    {{ form.fecha }}
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle me-1"></i>Las fechas pasadas están bloqueadas
+                        <!-- Step 2: Date and Time Selection -->
+                        <div class="booking-step" id="step-2">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-group-enhanced">
+                                        <label class="form-label fw-bold">
+                                            <i class="fas fa-calendar me-2 text-primary"></i>{{ form.fecha.label }}
+                                            <span class="step-indicator">3</span>
+                                        </label>
+                                        {{ form.fecha }}
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle me-1"></i>Las fechas pasadas están bloqueadas
+                                        </div>
+                                        {% if form.fecha.errors %}
+                                        <div class="text-danger small mt-1 animated-error">{{ form.fecha.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-check-icon" id="fecha-check" style="display: none;">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        </div>
                                     </div>
-                                    {% if form.fecha.errors %}
-                                    <div class="text-danger small mt-1">{{ form.fecha.errors.0 }}</div>
-                                    {% endif %}
                                 </div>
-                            </div>
-<<<<<<< HEAD
 
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">
-                                    <i class="fas fa-clock me-1"></i>{{ form.hora.label }}
-                                </label>
-                                <select class="form-select" id="id_hora_select" disabled>
-                                    <option value="">Selecciona fecha y barbero primero</option>
-                                </select>
-                                {{ form.hora }}
-                                <!-- Verificar que el campo hidden se renderiza correctamente -->
-                                <div id="horario-sugerencia" class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>Las horas se cargarán según disponibilidad
-=======
-                            <div class="col-lg-6">
-                                <div class="form-group-wide">
-                                    <label class="form-label fw-bold">
-                                        <i class="fas fa-clock me-2 text-primary"></i>{{ form.hora.label }}
-                                    </label>
-                                    {{ form.hora }}
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle me-1"></i>Las horas se cargarán según disponibilidad
+                                <div class="col-12 mb-3">
+                                    <div class="form-group-enhanced">
+                                        <label class="form-label fw-bold mb-3">
+                                            <i class="fas fa-clock me-2 text-primary"></i>{{ form.hora.label }}
+                                            <span class="step-indicator">4</span>
+                                        </label>
+                                        
+                                        <!-- Hidden select and input for form submission -->
+                                        <div style="display: none;">
+                                            <select class="form-select time-selector" id="id_hora_select" disabled>
+                                                <option value="">Selecciona fecha y barbero primero</option>
+                                            </select>
+                                            {{ form.hora }}
+                                        </div>
+                                        
+                                        <!-- Time slots grid -->
+                                        <div class="time-slots-container" id="time-slots-container">
+                                            <div class="time-slots-placeholder">
+                                                <i class="fas fa-clock text-muted"></i>
+                                                <p class="text-muted mb-0">Selecciona fecha y barbero para ver horarios disponibles</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div id="horario-sugerencia" class="form-text status-message mt-3">
+                                            <i class="fas fa-info-circle me-1"></i>Las horas se cargarán según disponibilidad
+                                        </div>
+                                        {% if form.hora.errors %}
+                                        <div class="text-danger small mt-1 animated-error">{{ form.hora.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-check-icon" id="hora-check" style="display: none;">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        </div>
                                     </div>
-                                    {% if form.hora.errors %}
-                                    <div class="text-danger small mt-1">{{ form.hora.errors.0 }}</div>
-                                    {% endif %}
->>>>>>> c29a06422c118aabd83ec4152462e37b25be09aa
                                 </div>
                             </div>
                         </div>
-
-<<<<<<< HEAD
-                        <!-- Email no necesario - se usa el del usuario logueado -->
 
                         <!-- Info de horarios mejorada -->
                         <div class="alert alert-info border-0 bg-light">
                             <div class="row text-center">
                                 <div class="col-md-4">
-=======
-                        <!-- Info de horarios -->
-                        <div class="alert alert-info mb-4">
-                            <div class="row text-center g-3">
-                                <div class="col-lg-4 col-md-6 mb-2">
->>>>>>> c29a06422c118aabd83ec4152462e37b25be09aa
                                     <i class="fas fa-business-time text-primary"></i>
                                     <div class="fw-bold">Lunes - Viernes</div>
                                     <div class="small">18:00 - 21:00</div>
                                 </div>
-                                <div class="col-lg-4 col-md-6 mb-2">
+                                <div class="col-md-4">
                                     <i class="fas fa-calendar-week text-success"></i>
                                     <div class="fw-bold">Sábados</div>
                                     <div class="small">09:00 - 18:00</div>
                                 </div>
-                                <div class="col-lg-4 col-md-12 mb-2">
+                                <div class="col-md-4">
                                     <i class="fas fa-times-circle text-danger"></i>
                                     <div class="fw-bold">Domingos</div>
                                     <div class="small">Cerrado</div>
@@ -158,33 +225,17 @@
                             </div>
                         </div>
 
-<<<<<<< HEAD
-                        <div class="d-flex justify-content-between align-items-center pt-3">
-                            <a href="{% url 'inicio' %}" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-1"></i>Volver al inicio
-                            </a>
-                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                                <span id="submitText">
-                                    <i class="fas fa-credit-card me-1"></i>Proceder al Pago
-                                </span>
-                                <span id="loadingText" style="display: none;">
-                                    <i class="fas fa-spinner fa-spin me-1"></i>Redirigiendo a MercadoPago...
-                                </span>
-                            </button>
-=======
-                        <!-- Botones -->
-                        <div class="row g-3">
-                            <div class="col-lg-8">
-                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <div class="pt-3">
+                            <div class="d-flex justify-content-center mb-3">
+                                <button type="submit" class="btn btn-primary btn-lg px-5">
                                     <i class="fas fa-check me-2"></i>Crear Reserva
                                 </button>
                             </div>
-                            <div class="col-lg-4">
-                                <a href="{% url 'inicio' %}" class="btn btn-outline-secondary btn-lg w-100">
+                            <div class="text-center">
+                                <a href="{% url 'inicio' %}" class="btn btn-outline-secondary">
                                     <i class="fas fa-arrow-left me-1"></i>Volver al inicio
                                 </a>
                             </div>
->>>>>>> c29a06422c118aabd83ec4152462e37b25be09aa
                         </div>
                     </form>
                 </div>
@@ -196,101 +247,6 @@
 <!-- Enhanced Booking System JavaScript -->
 <script src="{% static 'agendabarber/js/reserva-validation.js' %}?v=3.0"></script>
 
-<<<<<<< HEAD
-<!-- Payment form handling -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('reservaForm');
-    
-    // Email field removed - using logged user's email automatically
-    const submitBtn = document.getElementById('submitBtn');
-    const submitText = document.getElementById('submitText');
-    const loadingText = document.getElementById('loadingText');
-    
-    form.addEventListener('submit', function(e) {
-        console.log('🚀 Formulario enviándose...');
-        
-        // Verificar que todos los campos estén llenos antes de mostrar loading
-        const requiredFields = form.querySelectorAll('[required]');
-        let allValid = true;
-        
-        requiredFields.forEach(field => {
-            if (!field.value) {
-                allValid = false;
-                console.error('❌ Campo requerido vacío:', field.name || field.id);
-            }
-        });
-        
-        if (!allValid) {
-            console.error('❌ Formulario inválido, no mostrando loading');
-            return; // Dejar que la validación HTML5 maneje los errores
-        }
-        
-        console.log('✅ Formulario válido, mostrando loading...');
-        
-        // Show loading state
-        submitBtn.disabled = true;
-        submitText.style.display = 'none';
-        loadingText.style.display = 'inline';
-        
-        // Add a small delay to show the loading state
-        setTimeout(function() {
-            console.log('⏳ Enviando formulario después del delay...');
-            // The form will submit normally after this delay
-            // The server will handle the redirect to MercadoPago
-        }, 500);
-    });
-    
-    // Handle form validation errors - restore button state
-    window.addEventListener('pageshow', function(event) {
-        if (event.persisted) {
-            // Page was loaded from cache (back button)
-            submitBtn.disabled = false;
-            submitText.style.display = 'inline';
-            loadingText.style.display = 'none';
-        }
-    });
-});
-
-// Enhanced validation messages for payment flow
-function showPaymentValidationError(message) {
-    const alertHtml = `
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            <strong>Validación de Pago:</strong> ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
-    
-    const form = document.getElementById('reservaForm');
-    form.insertAdjacentHTML('beforebegin', alertHtml);
-}
-
-// Test adicional para verificar carga
-console.log('🔍 Verificando carga de JavaScript...');
-setTimeout(function() {
-    console.log('⏰ Verificación después de 1 segundo');
-    const elementos = {
-        fecha: document.getElementById('id_fecha'),
-        barbero: document.getElementById('id_barbero'),
-        servicio: document.getElementById('id_servicio'),
-        horaSelect: document.getElementById('id_hora_select'),
-        horaHidden: document.getElementById('id_hora_hidden'),
-        servicioInfo: document.getElementById('servicio-info'),
-        horarioSugerencia: document.getElementById('horario-sugerencia')
-    };
-    
-    console.log('📋 Estado de elementos:', elementos);
-    
-    Object.keys(elementos).forEach(key => {
-        if (!elementos[key]) {
-            console.error(`❌ Elemento ${key} no encontrado`);
-        } else {
-            console.log(`✅ Elemento ${key} encontrado`);
-        }
-    });
-}, 1000);
-=======
 {% endblock %}
 
 {% block extra_js %}
@@ -304,24 +260,24 @@ document.addEventListener('DOMContentLoaded', function() {
             theme: 'material_blue',
             dateFormat: 'Y-m-d',
             minDate: 'today',
-            maxDate: new Date().fp_incr(90),
+            maxDate: new Date().fp_incr(90), // 90 days from today
             disableMobile: false,
             allowInput: false,
             clickOpens: true,
             animate: true,
             position: 'auto',
             onChange: function(selectedDates, dateStr, instance) {
+                // Trigger the change event for our booking system
                 const event = new Event('change', { bubbles: true });
                 fechaInput.dispatchEvent(event);
             },
             onReady: function(selectedDates, dateStr, instance) {
+                // Add custom styling
                 const calendar = instance.calendarContainer;
                 calendar.classList.add('flatpickr-enhanced');
             }
         });
     }
 });
->>>>>>> c29a06422c118aabd83ec4152462e37b25be09aa
 </script>
-
 {% endblock %}
