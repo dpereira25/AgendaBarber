@@ -3,65 +3,90 @@
 
 {% block title %}Catálogo de Servicios{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'agendabarber/css/catalogo.css' %}">
+{% endblock %}
+
 {% block content %}
-<section class="services-section">
+<section class="catalog-section py-5">
     <div class="container">
-        <div class="row mb-5">
+        <!-- Header -->
+        <div class="row mb-4">
             <div class="col-12 text-center">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <span class="gradient-text">Catálogo Completo de Servicios</span>
-                    </h2>
-                    <p class="section-subtitle">
-                        Descubre todos nuestros servicios profesionales
-                    </p>
-                    <div class="section-divider"></div>
-                </div>
+                <h1 class="fw-bold mb-2">
+                    <span class="gradient-text">Nuestros</span> Servicios
+                </h1>
+                <p class="text-muted mb-3">
+                    Descubre todos nuestros servicios profesionales de barbería
+                </p>
+                <div class="mx-auto mb-4" style="width: 80px; height: 3px; background: linear-gradient(90deg, #D4AF37, #FFD700);"></div>
             </div>
         </div>
 
-        <div class="services-grid">
+        <!-- Services List -->
+        <div class="row g-4">
             {% for servicio in servicios %}
-            <div class="service-card-wrapper" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:100 }}">
-                <div class="service-card">
-                    <div class="service-image-container">
-                        {% if servicio.imagen %}
-                        <img src="{{ servicio.imagen.url }}" class="service-image" alt="{{ servicio.nombre }}">
-                        {% else %}
-                        <img src="{% static 'agendabarber/img/default.jpg' %}" class="service-image" alt="Sin imagen">
-                        {% endif %}
-                        <div class="service-overlay">
-                            <div class="service-price">
-                                <span class="price-currency">$</span>
-                                <span class="price-amount">{{ servicio.precio }}</span>
+            <div class="col-12">
+                <div class="card shadow border-0 service-card-horizontal {% if forloop.counter0|divisibleby:2 %}flex-row{% else %}flex-row-reverse{% endif %}" 
+                     style="overflow: hidden; border-radius: 15px;">
+                    
+                    <!-- Image -->
+                    <div class="col-md-4 p-0">
+                        <div class="service-image-wrapper">
+                            {% if servicio.imagen %}
+                            <img src="{{ servicio.imagen.url }}" 
+                                 alt="{{ servicio.nombre }}">
+                            {% else %}
+                            <img src="{% static 'agendabarber/img/default.jpg' %}" 
+                                 alt="Sin imagen">
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="col-md-8 d-flex">
+                        <div class="service-content-wrapper">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h5 class="fw-bold mb-0">{{ servicio.nombre }}</h5>
+                                    <span class="badge bg-gold price-badge ms-3">
+                                        ${{ servicio.precio|floatformat:0 }}
+                                    </span>
+                                </div>
+                                
+                                <p class="service-description">
+                                    {% if servicio.descripcion %}
+                                        {{ servicio.descripcion }}
+                                    {% else %}
+                                        Servicio profesional de barbería con atención personalizada y dedicada.
+                                    {% endif %}
+                                </p>
+                                
+                                <div class="duration-info">
+                                    <i class="fas fa-clock"></i>
+                                    <span>{{ servicio.duracion_minutos }} minutos</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-auto pt-3">
+                                <a href="{% url 'crear_reserva' %}?servicio_id={{ servicio.id }}" 
+                                   class="btn btn-reservar d-inline-flex align-items-center gap-2">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <span>Reservar Ahora</span>
+                                    <i class="fas fa-arrow-right"></i>
+                                </a>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="service-content">
-                        <h3 class="service-title">{{ servicio.nombre }}</h3>
-                        <p class="service-description">
-                            {{ servicio.descripcion|truncatewords:12 }}
-                        </p>
-                        <div class="service-duration">
-                            <i class="fas fa-clock"></i>
-                            <span>{{ servicio.duracion_minutos }} minutos</span>
-                        </div>
-                    </div>
-                    
-                    <div class="service-footer">
-                        <a href="{% url 'crear_reserva' %}?servicio_id={{ servicio.id }}" class="btn-service-book">
-                            <span>Reservar Ahora</span>
-                            <i class="fas fa-arrow-right"></i>
-                        </a>
                     </div>
                 </div>
             </div>
             {% empty %}
-            <div class="text-center py-5">
-                <i class="fas fa-cut fa-4x text-muted mb-3"></i>
-                <h4 class="text-muted">No hay servicios disponibles</h4>
-                <p class="text-muted">Pronto tendremos nuevos servicios para ti</p>
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-cut fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No hay servicios disponibles</h4>
+                    <p class="text-muted">Pronto tendremos nuevos servicios para ti</p>
+                </div>
             </div>
             {% endfor %}
         </div>

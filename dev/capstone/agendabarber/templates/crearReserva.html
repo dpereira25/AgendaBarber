@@ -47,7 +47,7 @@
                                 <div class="col-12 mb-4">
                                     <div class="form-group-enhanced">
                                         <label class="form-label fw-bold mb-3">
-                                            <i class="fas fa-user-tie me-2 text-primary"></i>{{ form.barbero.label }}
+                                            {{ form.barbero.label }}
                                             <span class="step-indicator">1</span>
                                         </label>
                                         
@@ -148,21 +148,25 @@
                         <!-- Step 2: Date and Time Selection -->
                         <div class="booking-step" id="step-2">
                             <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <div class="form-group-enhanced">
-                                        <label class="form-label fw-bold">
-                                            <i class="fas fa-calendar me-2 text-primary"></i>{{ form.fecha.label }}
-                                            <span class="step-indicator">3</span>
-                                        </label>
-                                        {{ form.fecha }}
-                                        <div class="form-text">
-                                            <i class="fas fa-info-circle me-1"></i>Las fechas pasadas están bloqueadas
-                                        </div>
-                                        {% if form.fecha.errors %}
-                                        <div class="text-danger small mt-1 animated-error">{{ form.fecha.errors.0 }}</div>
-                                        {% endif %}
-                                        <div class="form-check-icon" id="fecha-check" style="display: none;">
-                                            <i class="fas fa-check-circle text-success"></i>
+                                <div class="col-12 mb-3">
+                                    <div class="row justify-content-center">
+                                        <div class="col-md-6">
+                                            <div class="form-group-enhanced">
+                                                <label class="form-label fw-bold">
+                                                    <i class="fas fa-calendar me-2 text-primary"></i>{{ form.fecha.label }}
+                                                    <span class="step-indicator">3</span>
+                                                </label>
+                                                {{ form.fecha }}
+                                                <div class="form-text">
+                                                    <i class="fas fa-info-circle me-1"></i>Las fechas pasadas están bloqueadas
+                                                </div>
+                                                {% if form.fecha.errors %}
+                                                <div class="text-danger small mt-1 animated-error">{{ form.fecha.errors.0 }}</div>
+                                                {% endif %}
+                                                <div class="form-check-icon" id="fecha-check" style="display: none;">
+                                                    <i class="fas fa-check-circle text-success"></i>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -205,15 +209,15 @@
                         </div>
 
                         <!-- Info de horarios mejorada -->
-                        <div class="alert alert-info border-0 bg-light">
+                        <div class="alert alert-info border-0 bg-light schedule-info">
                             <div class="row text-center">
                                 <div class="col-md-4">
-                                    <i class="fas fa-business-time text-primary"></i>
+                                    <i class="fas fa-business-time text-gold"></i>
                                     <div class="fw-bold">Lunes - Viernes</div>
                                     <div class="small">18:00 - 21:00</div>
                                 </div>
                                 <div class="col-md-4">
-                                    <i class="fas fa-calendar-week text-success"></i>
+                                    <i class="fas fa-calendar-week text-gold"></i>
                                     <div class="fw-bold">Sábados</div>
                                     <div class="small">09:00 - 18:00</div>
                                 </div>

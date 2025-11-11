@@ -6,7 +6,18 @@
 {% block content %}
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-5">
-        <h1 class="text-center">Panel Administrativo 💈</h1>
+        <div>
+            <h1 class="text-center mb-2">Panel Administrativo 💈</h1>
+            {% if not is_barbero %}
+            <div class="badge bg-primary">
+                <i class="fas fa-crown me-1"></i>Vista Global - Todos los Barberos
+            </div>
+            {% else %}
+            <div class="badge bg-info">
+                <i class="fas fa-user me-1"></i>Vista Personal
+            </div>
+            {% endif %}
+        </div>
         
         <!-- Filtros de tiempo -->
         <div class="d-flex gap-2">

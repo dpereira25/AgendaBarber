@@ -14,21 +14,19 @@
 <!-- Hero Section -->
 {% if not user.is_authenticated %}
 <section class="hero-section">
-    <div class="hero-overlay"></div>
-    <div class="container-fluid h-100">
-        <div class="row h-100 align-items-center">
-            <div class="col-12 text-center text-white">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12">
                 <div class="hero-content animate-fade-in">
                     <h1 class="hero-title mb-4">
                         <span class="gradient-text">Agenda Barber</span>
-                        <span class="barber-icon">💈</span>
                     </h1>
                     <p class="hero-subtitle mb-5">
                         Transforma tu estilo con los mejores barberos profesionales.<br>
                         <strong>Reserva tu cita en segundos</strong>
                     </p>
                     <div class="hero-buttons">
-                        <a href="{% url 'registro' %}" class="btn btn-hero-primary btn-lg me-3">
+                        <a href="{% url 'registro' %}" class="btn btn-hero-primary btn-lg">
                             <i class="fas fa-rocket me-2"></i>Comenzar Ahora
                         </a>
                         <a href="{% url 'login' %}" class="btn btn-hero-outline btn-lg">
@@ -220,6 +218,85 @@
                         {% endif %}
                     </p>
                     <div class="section-divider"></div>
+
+                            <!-- Botón de información -->
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <button type="button" class="btn btn-info-custom" data-bs-toggle="modal" data-bs-target="#infoModal">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Guía de Estilos de Corte
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal mejorado -->
+<div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modern-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="infoModalLabel">
+                    <i class="fas fa-cut me-2"></i>Guía de Estilos de Corte
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <div class="info-content">
+                            <h6>FADE (Degradado)</h6>
+                            <p>Transición gradual del cabello. <strong>High</strong>, <strong>Medium</strong> o <strong>Low</strong> se refieren a la altura del degradado.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-wind"></i>
+                        </div>
+                        <div class="info-content">
+                            <h6>TEXTURA</h6>
+                            <p>Irregularidades en la parte superior para dar movimiento y un aspecto más natural o "despeinado".</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-compress-alt"></i>
+                        </div>
+                        <div class="info-content">
+                            <h6>COMPRIMIDO</h6>
+                            <p>Qué tan estirado quieres el degradado: <strong>comprimido</strong> es corto e impactante; <strong>estirado</strong> es más pulido.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-shapes"></i>
+                        </div>
+                        <div class="info-content">
+                            <h6>TERMINACIÓN</h6>
+                            <p>Puede ser <strong>redonda</strong>, <strong>cuadrada</strong> o en <strong>punta (V)</strong>. Permite patillas personalizadas.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-tip">
+                    <i class="fas fa-lightbulb"></i>
+                    <p>Esperamos que esta información te ayude a elegir tu próximo estilo perfecto.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-modal-close" data-bs-dismiss="modal">
+                    <i class="fas fa-check me-2"></i>Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
                 </div>
             </div>
         </div>
@@ -327,83 +404,6 @@
             </div>
         </div>
         
-        <!-- Botón de información -->
-        <div class="row mt-5">
-            <div class="col-12 text-center">
-                <button type="button" class="btn btn-info-custom" data-bs-toggle="modal" data-bs-target="#infoModal">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Guía de Estilos de Corte
-                </button>
-            </div>
-        </div>
-    </div>
-</section>
 
-<!-- Modal mejorado -->
-<div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content modern-modal">
-            <div class="modal-header">
-                <h5 class="modal-title" id="infoModalLabel">
-                    <i class="fas fa-cut me-2"></i>Guía de Estilos de Corte
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <div class="info-grid">
-                    <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-layer-group"></i>
-                        </div>
-                        <div class="info-content">
-                            <h6>FADE (Degradado)</h6>
-                            <p>Transición gradual del cabello. <strong>High</strong>, <strong>Medium</strong> o <strong>Low</strong> se refieren a la altura del degradado.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-wind"></i>
-                        </div>
-                        <div class="info-content">
-                            <h6>TEXTURA</h6>
-                            <p>Irregularidades en la parte superior para dar movimiento y un aspecto más natural o "despeinado".</p>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-compress-alt"></i>
-                        </div>
-                        <div class="info-content">
-                            <h6>COMPRIMIDO</h6>
-                            <p>Qué tan estirado quieres el degradado: <strong>comprimido</strong> es corto e impactante; <strong>estirado</strong> es más pulido.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-icon">
-                            <i class="fas fa-shapes"></i>
-                        </div>
-                        <div class="info-content">
-                            <h6>TERMINACIÓN</h6>
-                            <p>Puede ser <strong>redonda</strong>, <strong>cuadrada</strong> o en <strong>punta (V)</strong>. Permite patillas personalizadas.</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-tip">
-                    <i class="fas fa-lightbulb"></i>
-                    <p>Esperamos que esta información te ayude a elegir tu próximo estilo perfecto.</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-modal-close" data-bs-dismiss="modal">
-                    <i class="fas fa-check me-2"></i>Entendido
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 {% endblock %}

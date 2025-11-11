@@ -74,11 +74,14 @@ class MercadoPagoService:
         """Initialize MercadoPago SDK with credentials from settings"""
         try:
             self.access_token = settings.MERCADOPAGO_ACCESS_TOKEN
+            logger.info(f"Initializing MercadoPago with token: {self.access_token[:20]}..." if self.access_token else "No token found")
+            
             if not self.access_token:
                 logger.error("MercadoPago access token not configured")
                 raise MercadoPagoServiceError(
                     "MERCADOPAGO_ACCESS_TOKEN not configured",
-                    error_code='invalid_credentials'
+                    error_code='invalid_credentials',
+                    user_message='Error de configuración del sistema de pagos. Contacta al soporte.'
                 )
             
             # Initialize MercadoPago SDK
@@ -261,6 +264,14 @@ class MercadoPagoService:
         Build preference data structure with service details and configuration.
         CONFIGURACIÓN MÍNIMA PARA SANDBOX CHILE
         """
+        # Build callback URLs
+        success_url = self._build_callback_url(self.success_url, temp_reservation.id)
+        failure_url = self._build_callback_url(self.failure_url, temp_reservation.id)
+        pending_url = self._build_callback_url(self.pending_url, temp_reservation.id)
+        
+        # Log URLs for debugging
+        logger.info(f"Building preference with URLs - Success: {success_url}, Failure: {failure_url}, Pending: {pending_url}")
+        
         # Configuración mínima que funciona en sandbox Chile
         preference_data = {
             "items": [
@@ -274,14 +285,19 @@ class MercadoPagoService:
             "payer": {
                 "email": temp_reservation.cliente_email
             },
-            "back_urls": {
-                "success": self._build_callback_url(self.success_url, temp_reservation.id),
-                "failure": self._build_callback_url(self.failure_url, temp_reservation.id),
-                "pending": self._build_callback_url(self.pending_url, temp_reservation.id)
-            },
-            "auto_return": "approved",
             "external_reference": external_reference
         }
+        
+        # Only add back_urls and auto_return if URLs are properly configured
+        if success_url and failure_url and pending_url:
+            preference_data["back_urls"] = {
+                "success": success_url,
+                "failure": failure_url,
+                "pending": pending_url
+            }
+            preference_data["auto_return"] = "approved"
+        else:
+            logger.warning("Back URLs not fully configured, skipping auto_return")
         
         return preference_data
     
