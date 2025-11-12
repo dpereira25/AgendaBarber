@@ -25,7 +25,8 @@ urlpatterns = [
     
 
     
-    # Vistas de reservas
+    # Vistas de perfil y reservas
+    path('perfil/', views.perfil_cliente, name='perfil_cliente'),
     path('mis-reservas/', views.mis_reservas_cliente, name='mis_reservas'),
     path('agenda-barbero/', views.agenda_barbero, name='agenda_barbero'),
     

@@ -11,9 +11,9 @@ import json
 import logging 
 
 # 💡 Nuevas importaciones para autenticación
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
+from .forms import CustomUserCreationForm
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +77,8 @@ def confirmacionReserva(request):
 # ----------------------------------------------------------------------
 def registro_usuario(request):
     if request.method == 'POST':
-        # Instancia del formulario con los datos recibidos (ej. usuario, contraseña 1, contraseña 2)
-        form = UserCreationForm(request.POST) 
+        # Instancia del formulario personalizado con los datos recibidos
+        form = CustomUserCreationForm(request.POST) 
         
         if form.is_valid():
             user = form.save()
@@ -93,7 +93,7 @@ def registro_usuario(request):
                     messages.error(request, f"{error}")
     else:
         # Petición GET: Muestra el formulario de registro vacío
-        form = UserCreationForm()
+        form = CustomUserCreationForm()
         
     return render(request, 'registration/registro.html', {'form': form})
 
@@ -105,6 +105,55 @@ def logout_usuario(request):
     messages.success(request, '¡Has cerrado sesión exitosamente!')
     return redirect('inicio')
 
+
+@login_required
+def perfil_cliente(request):
+    """Vista para el perfil del cliente"""
+    # Obtener estadísticas del usuario
+    total_reservas = Reserva.objects.filter(cliente=request.user).count()
+    reservas_completadas = Reserva.objects.filter(
+        cliente=request.user, 
+        estado='Completada'
+    ).count()
+    reservas_pendientes = Reserva.objects.filter(
+        cliente=request.user,
+        estado__in=['Pendiente', 'Confirmada'],
+        inicio__gte=timezone.now()
+    ).count()
+    
+    # Próxima reserva
+    proxima_reserva = Reserva.objects.filter(
+        cliente=request.user,
+        estado__in=['Pendiente', 'Confirmada'],
+        inicio__gte=timezone.now()
+    ).select_related('barbero', 'servicio').order_by('inicio').first()
+    
+    # Últimas reservas (solo 3 para mantener formato)
+    ultimas_reservas = Reserva.objects.filter(
+        cliente=request.user
+    ).select_related('barbero', 'servicio').order_by('-inicio')[:3]
+    
+    context = {
+        'total_reservas': total_reservas,
+        'reservas_completadas': reservas_completadas,
+        'reservas_pendientes': reservas_pendientes,
+        'proxima_reserva': proxima_reserva,
+        'ultimas_reservas': ultimas_reservas,
+    }
+    
+    if request.method == 'POST':
+        # Actualizar información del perfil (solo nombre y apellido)
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        
+        request.user.first_name = first_name
+        request.user.last_name = last_name
+        request.user.save()
+        
+        messages.success(request, '¡Perfil actualizado exitosamente!')
+        return redirect('perfil_cliente')
+    
+    return render(request, 'perfil_cliente.html', context)
 
 def mis_reservas_cliente(request):
     """Vista para que los clientes vean sus reservas"""

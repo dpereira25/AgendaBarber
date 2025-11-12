@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mi Perfil - Crono Corte{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        color: #1a1a1a;
+        font-weight: bold;
+        margin-right: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-icon.primary {
+        background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+        color: #1a1a1a;
+    }
+    
+    .stat-icon.success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+    
+    .stat-icon.warning {
+        background: linear-gradient(135deg, #ffc107 0%, #ffeb3b 100%);
+        color: #1a1a1a;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .reserva-mini-card {
+        border-left: 4px solid #d4af37;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+        background: rgba(212, 175, 55, 0.05);
+    }
+    
+    .reserva-mini-card:hover {
+        transform: translateX(5px);
+        background: rgba(212, 175, 55, 0.1);
+    }
+    
+    .reserva-mini-card .fecha {
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .reserva-mini-card .detalles {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .form-control:focus {
+        border-color: #d4af37;
+        box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25);
+    }
+    
+    .btn-gold {
+        background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+        color: #1a1a1a;
+        border: none;
+        font-weight: 600;
+        padding: 0.75rem 2rem;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-gold:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+        color: #1a1a1a;
+    }
+    
+    @media (min-width: 992px) {
+        .card-equal-height {
+            min-height: 520px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card-equal-height .card-body {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card-equal-height form {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card-equal-height form button[type="submit"] {
+            margin-top: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Cambiar texto del botón al expandir/colapsar
+    document.addEventListener('DOMContentLoaded', function() {
+        const detallesReserva = document.getElementById('detallesReserva');
+        const btnToggle = document.getElementById('btnToggleDetalles');
+        
+        if (detallesReserva && btnToggle) {
+            detallesReserva.addEventListener('show.bs.collapse', function () {
+                btnToggle.innerHTML = '<i class="fas fa-chevron-up me-2"></i>Ver Menos Detalles';
+            });
+            
+            detallesReserva.addEventListener('hide.bs.collapse', function () {
+                btnToggle.innerHTML = '<i class="fas fa-chevron-down me-2"></i>Ver Más Detalles';
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Header del Perfil -->
+    <div class="card mb-4" data-aos="fade-up">
+        <div class="card-body">
+            <div class="d-flex align-items-center">
+                <div class="profile-avatar">
+                    {{ user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <h2 class="mb-2">{{ user.get_full_name|default:user.username }}</h2>
+                    <p class="mb-1 text-muted">
+                        <i class="fas fa-envelope me-2"></i>{{ user.email|default:"Sin email registrado" }}
+                    </p>
+                    <p class="mb-0 text-muted">
+                        <i class="fas fa-calendar me-2"></i>Usuario desde {{ user.date_joined|date:"d/m/Y" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Próxima Reserva -->
+    {% if proxima_reserva %}
+    <div class="card border-warning mb-4" data-aos="fade-up">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="fas fa-star me-2"></i>Tu Próxima Reserva</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-2">
+                    <i class="fas fa-calendar me-2 text-warning"></i>
+                    <strong>{{ proxima_reserva.inicio|date:"l, d \d\e F \d\e Y" }}</strong>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <i class="fas fa-clock me-2 text-warning"></i>
+                    <strong>{{ proxima_reserva.inicio|date:"H:i" }} hrs</strong>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <i class="fas fa-cut me-2 text-warning"></i>
+                    {{ proxima_reserva.servicio.nombre }}
+                </div>
+                <div class="col-md-6 mb-2">
+                    <i class="fas fa-user-tie me-2 text-warning"></i>
+                    Barbero: {{ proxima_reserva.barbero.nombre }}
+                </div>
+            </div>
+            
+            <!-- Detalles expandibles -->
+            <div class="collapse" id="detallesReserva">
+                <hr class="my-3">
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <i class="fas fa-hourglass-half me-2 text-warning"></i>
+                        <strong>Duración:</strong> {{ proxima_reserva.servicio.duracion_minutos }} minutos
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <i class="fas fa-dollar-sign me-2 text-warning"></i>
+                        <strong>Precio:</strong> ${{ proxima_reserva.servicio.precio }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <i class="fas fa-info-circle me-2 text-warning"></i>
+                        <strong>Estado:</strong> 
+                        <span class="badge {% if proxima_reserva.estado == 'Confirmada' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                            {{ proxima_reserva.estado }}
+                        </span>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <i class="fas fa-credit-card me-2 text-warning"></i>
+                        <strong>Pagado:</strong> {% if proxima_reserva.pagado %}Sí{% else %}No{% endif %}
+                    </div>
+                    {% if proxima_reserva.servicio.descripcion %}
+                    <div class="col-12 mt-2">
+                        <i class="fas fa-align-left me-2 text-warning"></i>
+                        <strong>Descripción:</strong>
+                        <p class="mb-0 mt-1 text-muted">{{ proxima_reserva.servicio.descripcion }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <button class="btn btn-warning" type="button" data-bs-toggle="collapse" data-bs-target="#detallesReserva" aria-expanded="false" aria-controls="detallesReserva" id="btnToggleDetalles">
+                    <i class="fas fa-chevron-down me-2"></i>Ver Más Detalles
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Estadísticas -->
+    <div class="row mb-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="stat-icon primary mx-auto">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-number">{{ total_reservas }}</div>
+                    <div class="stat-label">Total de Reservas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="stat-icon success mx-auto">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-number">{{ reservas_completadas }}</div>
+                    <div class="stat-label">Reservas Completadas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="stat-icon warning mx-auto">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-number">{{ reservas_pendientes }}</div>
+                    <div class="stat-label">Reservas Pendientes</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información Personal -->
+        <div class="col-lg-6 mb-4 d-flex" data-aos="fade-right">
+            <div class="card card-equal-height w-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-circle me-2 text-warning"></i>
+                        Información Personal
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Información de cuenta (solo lectura) -->
+                    <div class="alert alert-info mb-4">
+                        <div class="mb-2">
+                            <small class="d-block mb-1">Tu nombre de usuario para iniciar sesión:</small>
+                            <strong><i class="fas fa-user me-2"></i>{{ user.username }}</strong>
+                        </div>
+                        <hr class="my-2">
+                        <div>
+                            <small class="d-block mb-1">Tu correo electrónico:</small>
+                            <strong><i class="fas fa-envelope me-2"></i>{{ user.email|default:"Sin email registrado" }}</strong>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Para cambiar tu email, contacta al administrador
+                        </small>
+                    </div>
+                    
+                    <!-- Formulario de edición -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" placeholder="Tu nombre">
+                        </div>
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">Apellido</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" placeholder="Tu apellido">
+                        </div>
+                        <button type="submit" class="btn btn-gold w-100">
+                            <i class="fas fa-save me-2"></i>Guardar Cambios
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Últimas Reservas -->
+        <div class="col-lg-6 mb-4 d-flex" data-aos="fade-left">
+            <div class="card card-equal-height w-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2 text-warning"></i>
+                        Últimas Reservas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if ultimas_reservas %}
+                        {% for reserva in ultimas_reservas %}
+                        <div class="reserva-mini-card">
+                            <div class="fecha">
+                                <i class="fas fa-calendar me-2"></i>
+                                {{ reserva.inicio|date:"d/m/Y - H:i" }} hrs
+                            </div>
+                            <div class="detalles">
+                                <i class="fas fa-cut me-2"></i>{{ reserva.servicio.nombre }}
+                                <br>
+                                <i class="fas fa-user-tie me-2"></i>{{ reserva.barbero.nombre }}
+                                <br>
+                                <span class="badge 
+                                    {% if reserva.estado == 'Completada' %}bg-success
+                                    {% elif reserva.estado == 'Confirmada' %}bg-primary
+                                    {% elif reserva.estado == 'Pendiente' %}bg-warning text-dark
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ reserva.estado }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        <div class="text-center mt-3">
+                            <a href="{% url 'mis_reservas' %}" class="btn btn-outline-secondary w-100">
+                                Ver Todas las Reservas <i class="fas fa-arrow-right ms-2"></i>
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No tienes reservas aún</p>
+                            <a href="{% url 'crear_reserva' %}" class="btn btn-gold">
+                                <i class="fas fa-plus me-2"></i>Hacer una Reserva
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

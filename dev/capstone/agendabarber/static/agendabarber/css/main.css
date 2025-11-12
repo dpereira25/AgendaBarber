@@ -561,10 +561,18 @@ body.dark-mode .hero-section {
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 2rem;
     margin-bottom: 3rem;
+    grid-auto-rows: 1fr;
 }
 
 .service-card-wrapper {
     perspective: 1000px;
+    display: flex;
+}
+
+.service-card {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .service-image-container {
@@ -640,6 +648,7 @@ body.dark-mode .hero-section {
     line-height: 1.6;
     margin-bottom: 1.5rem;
     flex-grow: 1;
+    min-height: 3em;
 }
 
 .service-duration {

@@ -1,7 +1,43 @@
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import datetime, timedelta, time, date
 from .models import Reserva, Servicio, Barbero
+
+
+class CustomUserCreationForm(UserCreationForm):
+    """
+    Formulario personalizado de registro que incluye nombre, apellido y email
+    """
+    first_name = forms.CharField(
+        max_length=30,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tu nombre'})
+    )
+    last_name = forms.CharField(
+        max_length=30,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tu apellido'})
+    )
+    email = forms.EmailField(
+        max_length=254,
+        required=False,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'tu@email.com'})
+    )
+    
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2')
+    
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.first_name = self.cleaned_data.get('first_name', '')
+        user.last_name = self.cleaned_data.get('last_name', '')
+        user.email = self.cleaned_data.get('email', '')
+        if commit:
+            user.save()
+        return user
 
 class ReservaForm(forms.ModelForm):
     """
