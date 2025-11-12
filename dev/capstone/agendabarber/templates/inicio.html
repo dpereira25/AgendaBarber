@@ -14,12 +14,16 @@
 <!-- Hero Section -->
 {% if not user.is_authenticated %}
 <section class="hero-section">
+    <div class="hero-image-bg">
+        <img src="{% static 'agendabarber/img/hero-img.png' %}" alt="Barbería" class="hero-background-image">
+    </div>
+    <div class="hero-overlay-gradient"></div>
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-12">
                 <div class="hero-content animate-fade-in">
                     <h1 class="hero-title mb-4">
-                        <span class="gradient-text">Agenda Barber</span>
+                        <span class="gradient-text">Crono Corte</span>
                     </h1>
                     <p class="hero-subtitle mb-5">
                         Transforma tu estilo con los mejores barberos profesionales.<br>

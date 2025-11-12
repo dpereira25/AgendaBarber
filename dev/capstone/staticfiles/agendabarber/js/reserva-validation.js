@@ -7,7 +7,9 @@ class BookingFormController {
         this.state = {
             currentStep: 1,
             formData: {},
-            isLoading: false
+            isLoading: false,
+            lastFetchParams: null,
+            fetchTimeout: null
         };
         this.init();
     }
@@ -41,19 +43,19 @@ class BookingFormController {
     }
 
     setupEventListeners() {
-        // Date change - reload available times
+        // Date change - reload available times with debounce
         this.elements.fechaInput.addEventListener('change', () => {
             console.log('📅 Date changed:', this.elements.fechaInput.value);
             this.updateStepCompletion('fecha');
-            this.loadAvailableTimes();
+            this.debouncedLoadAvailableTimes();
             this.updateProgress();
         });
 
-        // Barber change - reload available times
+        // Barber change - reload available times with debounce
         this.elements.barberoSelect.addEventListener('change', () => {
             console.log('💇 Barber changed:', this.elements.barberoSelect.value);
             this.updateStepCompletion('barbero');
-            this.loadAvailableTimes();
+            this.debouncedLoadAvailableTimes();
             this.updateProgress();
         });
 
@@ -80,6 +82,18 @@ class BookingFormController {
                 e.preventDefault();
             }
         });
+    }
+
+    debouncedLoadAvailableTimes() {
+        // Clear any pending timeout
+        if (this.state.fetchTimeout) {
+            clearTimeout(this.state.fetchTimeout);
+        }
+
+        // Set new timeout to prevent rapid-fire requests
+        this.state.fetchTimeout = setTimeout(() => {
+            this.loadAvailableTimes();
+        }, 300); // Wait 300ms after last change
     }
 
     loadInitialData() {
@@ -129,10 +143,23 @@ class BookingFormController {
 
         console.log('🔍 Loading times for:', { fecha, barberoId });
 
+        // Check if we're already loading or if params haven't changed
+        const currentParams = `${fecha}-${barberoId}`;
+        if (this.state.isLoading) {
+            console.log('⏸️ Already loading, skipping duplicate request');
+            return;
+        }
+        
+        if (this.state.lastFetchParams === currentParams) {
+            console.log('⏸️ Same parameters, skipping duplicate request');
+            return;
+        }
+
         // Reset time selection
         this.elements.horaHidden.value = '';
         
         if (!fecha || !barberoId) {
+            this.state.lastFetchParams = null;
             this.elements.horaSelect.innerHTML = '<option value="">Selecciona fecha y barbero primero</option>';
             this.elements.horaSelect.disabled = true;
             this.updateHorarioSugerencia('info', 'Selecciona fecha y barbero para ver horarios disponibles');
@@ -150,8 +177,11 @@ class BookingFormController {
             return;
         }
 
+        // Store current params to prevent duplicates
+        this.state.lastFetchParams = currentParams;
+
         // Show loading state
-        this.setLoadingState(true);
+        this.state.isLoading = true;
         this.elements.horaSelect.innerHTML = '<option value="">Cargando horarios disponibles...</option>';
         this.elements.horaSelect.disabled = true;
         this.updateHorarioSugerencia('info', 'Cargando horarios disponibles...');
@@ -168,6 +198,7 @@ class BookingFormController {
         }
 
         try {
+            console.log('🌐 Fetching from:', `/horas-disponibles/?fecha=${fecha}&barbero=${barberoId}`);
             const response = await fetch(`/horas-disponibles/?fecha=${fecha}&barbero=${barberoId}`);
             
             if (!response.ok) {
@@ -181,6 +212,7 @@ class BookingFormController {
             
         } catch (error) {
             console.error('❌ Error loading available times:', error);
+            this.state.lastFetchParams = null; // Reset to allow retry
             this.elements.horaSelect.innerHTML = '<option value="">Error al cargar horarios</option>';
             this.updateHorarioSugerencia('error', 'Error al cargar horarios. Intenta nuevamente.');
             
@@ -196,7 +228,7 @@ class BookingFormController {
                 `;
             }
         } finally {
-            this.setLoadingState(false);
+            this.state.isLoading = false;
         }
     }
 

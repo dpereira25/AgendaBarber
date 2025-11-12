@@ -121,6 +121,6 @@ class ReservaAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related('cliente', 'barbero', 'servicio')
 
 # Personalizar el título del admin
-admin.site.site_header = "Administración - Agenda Barber"
-admin.site.site_title = "Agenda Barber Admin"
+admin.site.site_header = "Administración - Crono Corte"
+admin.site.site_title = "Crono Corte Admin"
 admin.site.index_title = "Panel de Administración"

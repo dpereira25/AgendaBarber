@@ -255,30 +255,37 @@
 
 {% block extra_js %}
 <script>
-// Initialize Flatpickr for date selection
+// Initialize Litepicker for date selection
 document.addEventListener('DOMContentLoaded', function() {
     const fechaInput = document.getElementById('id_fecha');
     if (fechaInput) {
-        flatpickr(fechaInput, {
-            locale: 'es',
-            theme: 'material_blue',
-            dateFormat: 'Y-m-d',
-            minDate: 'today',
-            maxDate: new Date().fp_incr(90), // 90 days from today
-            disableMobile: false,
-            allowInput: false,
-            clickOpens: true,
-            animate: true,
-            position: 'auto',
-            onChange: function(selectedDates, dateStr, instance) {
-                // Trigger the change event for our booking system
-                const event = new Event('change', { bubbles: true });
-                fechaInput.dispatchEvent(event);
-            },
-            onReady: function(selectedDates, dateStr, instance) {
-                // Add custom styling
-                const calendar = instance.calendarContainer;
-                calendar.classList.add('flatpickr-enhanced');
+        // Change input type to text to prevent native calendar
+        fechaInput.setAttribute('type', 'text');
+        fechaInput.setAttribute('readonly', 'readonly');
+        fechaInput.setAttribute('placeholder', 'Selecciona una fecha');
+        
+        const today = new Date();
+        const maxDate = new Date();
+        maxDate.setDate(today.getDate() + 90); // 90 days from today
+        
+        const picker = new Litepicker({
+            element: fechaInput,
+            format: 'YYYY-MM-DD',
+            lang: 'es-ES',
+            minDate: today,
+            maxDate: maxDate,
+            autoApply: true,
+            singleMode: true,
+            numberOfMonths: 1,
+            numberOfColumns: 1,
+            mobileFriendly: true,
+            resetButton: false,
+            setup: (picker) => {
+                picker.on('selected', (date) => {
+                    // Trigger the change event for our booking system
+                    const event = new Event('change', { bubbles: true });
+                    fechaInput.dispatchEvent(event);
+                });
             }
         });
     }
