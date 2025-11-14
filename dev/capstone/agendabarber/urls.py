@@ -9,6 +9,7 @@ urlpatterns = [
     path('', views.cargarInicio, name='inicio'), 
     path('base/', views.cargarBase, name='base'),
     path('catalogo/', views.cargarCatalogo, name='catalogo'),
+    path('contacto/', views.contacto, name='contacto'),
     
     # Rutas del proceso de reserva
     # Formulario principal unificado

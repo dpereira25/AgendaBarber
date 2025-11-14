@@ -1275,3 +1275,25 @@ def eliminar_barbero(request, barbero_id):
 
 
 
+
+
+# ======================================================================
+# CONTACTO
+# ======================================================================
+
+def contacto(request):
+    """Página de contacto con información de la barbería"""
+    context = {
+        'telefono': '+569 34135145',
+        'email': 'info@cronocorte.cl',
+        'direccion': 'Av. Principal 123, Santiago',
+        'whatsapp': '56934135145',  # Sin + ni espacios para el link
+        'instagram': 'https://www.instagram.com/jamonbarber/',
+        'instagram_user': '@jamonbarber',
+        'horarios': {
+            'lunes_viernes': '18:00 - 21:00',
+            'sabado': '09:00 - 18:00',
+            'domingo': 'Cerrado'
+        }
+    }
+    return render(request, 'contacto.html', context)

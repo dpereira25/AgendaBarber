@@ -50,7 +50,7 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'inicio' %}">Inicio</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'crear_reserva' %}">Reservar</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'catalogo' %}">Catálogo</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Contacto</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'contacto' %}">Contacto</a></li>
                     
                     <!-- Dark Mode Toggle -->
                     <li class="nav-item">
@@ -136,6 +136,14 @@
         {% block content %}
         {% endblock %}
     </main>
+
+    <!-- Botón flotante de WhatsApp -->
+    <a href="https://wa.me/56934135145?text=Hola,%20quiero%20información%20sobre%20sus%20servicios" 
+       target="_blank" 
+       class="whatsapp-float" 
+       aria-label="Contactar por WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
 
     <footer class="bg-dark text-light text-center py-3 mt-auto">
         <div class="container-fluid"> <p class="mb-0">© 2025 Crono Corte - Todos los derechos reservados</p>

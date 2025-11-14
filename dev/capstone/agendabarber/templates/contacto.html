@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Contacto - Crono Corte{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Encabezado -->
+            <div class="text-center mb-5" data-aos="fade-down">
+                <h1 class="display-4 mb-3">
+                    <i class="fas fa-map-marker-alt text-warning me-3"></i>Contáctanos
+                </h1>
+                <p class="lead text-muted">Estamos aquí para atenderte. Visítanos o contáctanos por tu medio preferido.</p>
+            </div>
+
+            <div class="row g-4">
+                <!-- Información de Contacto -->
+                <div class="col-md-6" data-aos="fade-right">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body p-4">
+                            <h3 class="card-title mb-4">
+                                <i class="fas fa-info-circle text-warning me-2"></i>Información
+                            </h3>
+                            
+                            <!-- Teléfono -->
+                            <div class="mb-4">
+                                <h5 class="mb-2">
+                                    <i class="fas fa-phone text-success me-2"></i>Teléfono
+                                </h5>
+                                <a href="tel:{{ telefono }}" class="text-decoration-none fs-5">
+                                    {{ telefono }}
+                                </a>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="mb-4">
+                                <h5 class="mb-2">
+                                    <i class="fas fa-envelope text-primary me-2"></i>Email
+                                </h5>
+                                <a href="mailto:{{ email }}" class="text-decoration-none fs-5">
+                                    {{ email }}
+                                </a>
+                            </div>
+
+                            <!-- Dirección -->
+                            <div class="mb-4">
+                                <h5 class="mb-2">
+                                    <i class="fas fa-map-marker-alt text-danger me-2"></i>Dirección
+                                </h5>
+                                <p class="fs-5 mb-0">{{ direccion }}</p>
+                            </div>
+
+                            <!-- WhatsApp -->
+                            <div class="mb-4">
+                                <h5 class="mb-2">
+                                    <i class="fab fa-whatsapp text-success me-2"></i>WhatsApp
+                                </h5>
+                                <a href="https://wa.me/{{ whatsapp }}?text=Hola,%20quiero%20información%20sobre%20sus%20servicios" 
+                                   target="_blank" 
+                                   class="btn btn-success btn-lg">
+                                    <i class="fab fa-whatsapp me-2"></i>Chatear por WhatsApp
+                                </a>
+                            </div>
+
+                            <!-- Redes Sociales -->
+                            <div>
+                                <h5 class="mb-3">
+                                    <i class="fas fa-share-alt text-info me-2"></i>Síguenos
+                                </h5>
+                                <a href="{{ instagram }}" target="_blank" class="btn btn-outline-danger btn-lg">
+                                    <i class="fab fa-instagram"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Horarios y Mapa -->
+                <div class="col-md-6" data-aos="fade-left">
+                    <!-- Horarios -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h3 class="card-title mb-4">
+                                <i class="fas fa-clock text-warning me-2"></i>Horarios de Atención
+                            </h3>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <span class="fw-bold">Lunes - Viernes</span>
+                                    <span class="badge bg-warning text-dark fs-6">{{ horarios.lunes_viernes }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <span class="fw-bold">Sábado</span>
+                                    <span class="badge bg-warning text-dark fs-6">{{ horarios.sabado }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2">
+                                    <span class="fw-bold">Domingo</span>
+                                    <span class="badge bg-secondary fs-6">{{ horarios.domingo }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mapa -->
+                    <div class="card shadow-sm">
+                        <div class="card-body p-0">
+                            <div class="ratio ratio-16x9">
+                                <iframe 
+                                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3329.6891234567!2d-70.6482!3d-33.4372!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzPCsDI2JzE0LjAiUyA3MMKwMzgnNTMuNSJX!5e0!3m2!1ses!2scl!4v1234567890"
+                                    style="border:0;" 
+                                    allowfullscreen="" 
+                                    loading="lazy" 
+                                    referrerpolicy="no-referrer-when-downgrade">
+                                </iframe>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center">
+                            <a href="https://maps.google.com/?q={{ direccion }}" 
+                               target="_blank" 
+                               class="btn btn-outline-primary">
+                                <i class="fas fa-directions me-2"></i>Cómo llegar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Llamado a la acción -->
+            <div class="text-center mt-5" data-aos="fade-up">
+                <div class="card bg-warning text-dark shadow-lg">
+                    <div class="card-body p-5">
+                        <h3 class="mb-3">¿Listo para tu próximo corte?</h3>
+                        <p class="lead mb-4">Agenda tu cita ahora y disfruta de nuestros servicios profesionales</p>
+                        <a href="{% url 'crear_reserva' %}" class="btn btn-dark btn-lg">
+                            <i class="fas fa-calendar-plus me-2"></i>Reservar Ahora
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
