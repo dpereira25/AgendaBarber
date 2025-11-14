@@ -307,3 +307,138 @@ class ReservaForm(forms.ModelForm):
         except HorarioTrabajo.DoesNotExist:
             # Usar horarios por defecto (lunes a sábado)
             return dia_semana in [1, 2, 3, 4, 5, 6]
+
+
+
+class BarberoForm(forms.ModelForm):
+    """Formulario para crear y editar barberos"""
+    
+    # Campos para crear usuario (siempre requeridos al crear)
+    nuevo_username = forms.CharField(
+        max_length=150,
+        required=True,
+        label='Nombre de usuario',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Ej: barbero_juan'
+        })
+    )
+    
+    nuevo_email = forms.EmailField(
+        required=True,
+        label='Email',
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'barbero@cronocorte.com'
+        })
+    )
+    
+    nuevo_password = forms.CharField(
+        required=True,
+        label='Contraseña',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Contraseña segura'
+        })
+    )
+    
+    nuevo_password_confirm = forms.CharField(
+        required=True,
+        label='Confirmar contraseña',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Repite la contraseña'
+        })
+    )
+    
+    class Meta:
+        model = Barbero
+        fields = ['nombre', 'experiencia', 'foto']
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre completo del barbero'
+            }),
+            'experiencia': forms.Select(
+                choices=[(i, f'{i} año{"s" if i != 1 else ""}') for i in range(0, 31)],
+                attrs={
+                    'class': 'form-select',
+                    'size': '1',
+                    'style': 'height: auto;'
+                }
+            ),
+            'foto': forms.FileInput(attrs={
+                'class': 'form-control'
+            }),
+        }
+        labels = {
+            'nombre': 'Nombre Completo',
+            'experiencia': 'Años de Experiencia',
+            'foto': 'Foto de Perfil',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Si estamos editando, ocultar los campos de usuario
+        if self.instance.pk:
+            # Eliminar los campos de usuario del formulario al editar
+            del self.fields['nuevo_username']
+            del self.fields['nuevo_email']
+            del self.fields['nuevo_password']
+            del self.fields['nuevo_password_confirm']
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Solo validar si estamos creando (los campos no existen al editar)
+        if not self.instance.pk:
+            nuevo_username = cleaned_data.get('nuevo_username')
+            nuevo_email = cleaned_data.get('nuevo_email')
+            nuevo_password = cleaned_data.get('nuevo_password')
+            nuevo_password_confirm = cleaned_data.get('nuevo_password_confirm')
+            
+            if nuevo_username and User.objects.filter(username=nuevo_username).exists():
+                self.add_error('nuevo_username', 'Este nombre de usuario ya existe')
+            
+            if nuevo_email and User.objects.filter(email=nuevo_email).exists():
+                self.add_error('nuevo_email', 'Este email ya está registrado')
+            
+            if nuevo_password and len(nuevo_password) < 8:
+                self.add_error('nuevo_password', 'La contraseña debe tener al menos 8 caracteres')
+            
+            if nuevo_password != nuevo_password_confirm:
+                self.add_error('nuevo_password_confirm', 'Las contraseñas no coinciden')
+        
+        return cleaned_data
+    
+    def save(self, commit=True):
+        barbero = super().save(commit=False)
+        
+        # Solo crear usuario si estamos creando un barbero nuevo
+        if not self.instance.pk:
+            nuevo_username = self.cleaned_data.get('nuevo_username')
+            nuevo_email = self.cleaned_data.get('nuevo_email')
+            nuevo_password = self.cleaned_data.get('nuevo_password')
+            
+            if nuevo_username and nuevo_email and nuevo_password:
+                nuevo_usuario = User.objects.create_user(
+                    username=nuevo_username,
+                    email=nuevo_email,
+                    password=nuevo_password,
+                    first_name=barbero.nombre.split()[0] if barbero.nombre else '',
+                    last_name=' '.join(barbero.nombre.split()[1:]) if len(barbero.nombre.split()) > 1 else '',
+                    is_staff=False  # Los barberos NO son staff, solo tienen acceso a su agenda
+                )
+                barbero.usuario = nuevo_usuario
+        else:
+            # Al editar, actualizar el nombre del usuario si cambió el nombre del barbero
+            if barbero.usuario:
+                barbero.usuario.first_name = barbero.nombre.split()[0] if barbero.nombre else ''
+                barbero.usuario.last_name = ' '.join(barbero.nombre.split()[1:]) if len(barbero.nombre.split()) > 1 else ''
+                barbero.usuario.save()
+        
+        if commit:
+            barbero.save()
+        
+        return barbero

@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+﻿from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -10,7 +10,7 @@ from django.utils import timezone
 import json
 import logging 
 
-# 💡 Nuevas importaciones para autenticación
+# ðŸ’¡ Nuevas importaciones para autenticaciÃ³n
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from .forms import CustomUserCreationForm
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 # ----------------------------------------------------------------------
-# FUNCIONES DE NAVEGACIÓN (Se mantienen)
+# FUNCIONES DE NAVEGACIÃ“N (Se mantienen)
 # ----------------------------------------------------------------------
 
 def cargarBase(request):
@@ -34,14 +34,14 @@ def cargarInicio(request):
     servicios = Servicio.objects.all()[:3]
     context = {'servicios': servicios}
     
-    # Información personalizada según el tipo de usuario
+    # InformaciÃ³n personalizada segÃºn el tipo de usuario
     if request.user.is_authenticated:
         hoy = date.today()
         
         # Verificar si es barbero
         try:
             barbero = Barbero.objects.get(usuario=request.user)
-            # Es barbero - mostrar todas las reservas del día (simplificado)
+            # Es barbero - mostrar todas las reservas del dÃ­a (simplificado)
             reservas_hoy = Reserva.objects.filter(
                 barbero=barbero,
                 inicio__date=hoy
@@ -54,7 +54,7 @@ def cargarInicio(request):
             })
             
         except Barbero.DoesNotExist:
-            # Es cliente - mostrar próximas reservas
+            # Es cliente - mostrar prÃ³ximas reservas
             ahora = timezone.now()
             proximas_reservas = Reserva.objects.filter(
                 cliente=request.user,
@@ -73,7 +73,7 @@ def confirmacionReserva(request):
     return render(request, 'confirmacionReserva.html')
 
 # ----------------------------------------------------------------------
-# 💡 NUEVA FUNCIÓN: REGISTRO DE USUARIO
+# ðŸ’¡ NUEVA FUNCIÃ“N: REGISTRO DE USUARIO
 # ----------------------------------------------------------------------
 def registro_usuario(request):
     if request.method == 'POST':
@@ -82,17 +82,17 @@ def registro_usuario(request):
         
         if form.is_valid():
             user = form.save()
-            messages.success(request, '¡Cuenta creada con éxito! Ya puedes iniciar sesión.')
-            # Redirige a la página de login (definida en las urls de django.contrib.auth)
+            messages.success(request, 'Â¡Cuenta creada con Ã©xito! Ya puedes iniciar sesiÃ³n.')
+            # Redirige a la pÃ¡gina de login (definida en las urls de django.contrib.auth)
             return redirect('login') 
         else:
-            # Si el formulario no es válido (ej. contraseñas no coinciden, usuario ya existe),
+            # Si el formulario no es vÃ¡lido (ej. contraseÃ±as no coinciden, usuario ya existe),
             # mostramos los errores en el template.
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{error}")
     else:
-        # Petición GET: Muestra el formulario de registro vacío
+        # PeticiÃ³n GET: Muestra el formulario de registro vacÃ­o
         form = CustomUserCreationForm()
         
     return render(request, 'registration/registro.html', {'form': form})
@@ -102,14 +102,14 @@ def logout_usuario(request):
     Vista personalizada para logout que redirije directamente
     """
     logout(request)
-    messages.success(request, '¡Has cerrado sesión exitosamente!')
+    messages.success(request, 'Â¡Has cerrado sesiÃ³n exitosamente!')
     return redirect('inicio')
 
 
 @login_required
 def perfil_cliente(request):
     """Vista para el perfil del cliente"""
-    # Obtener estadísticas del usuario
+    # Obtener estadÃ­sticas del usuario
     total_reservas = Reserva.objects.filter(cliente=request.user).count()
     reservas_completadas = Reserva.objects.filter(
         cliente=request.user, 
@@ -121,14 +121,14 @@ def perfil_cliente(request):
         inicio__gte=timezone.now()
     ).count()
     
-    # Próxima reserva
+    # PrÃ³xima reserva
     proxima_reserva = Reserva.objects.filter(
         cliente=request.user,
         estado__in=['Pendiente', 'Confirmada'],
         inicio__gte=timezone.now()
     ).select_related('barbero', 'servicio').order_by('inicio').first()
     
-    # Últimas reservas (solo 3 para mantener formato)
+    # Ãšltimas reservas (solo 3 para mantener formato)
     ultimas_reservas = Reserva.objects.filter(
         cliente=request.user
     ).select_related('barbero', 'servicio').order_by('-inicio')[:3]
@@ -142,7 +142,7 @@ def perfil_cliente(request):
     }
     
     if request.method == 'POST':
-        # Actualizar información del perfil (solo nombre y apellido)
+        # Actualizar informaciÃ³n del perfil (solo nombre y apellido)
         first_name = request.POST.get('first_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
         
@@ -150,7 +150,7 @@ def perfil_cliente(request):
         request.user.last_name = last_name
         request.user.save()
         
-        messages.success(request, '¡Perfil actualizado exitosamente!')
+        messages.success(request, 'Â¡Perfil actualizado exitosamente!')
         return redirect('perfil_cliente')
     
     return render(request, 'perfil_cliente.html', context)
@@ -164,7 +164,7 @@ def mis_reservas_cliente(request):
         cliente=request.user
     ).select_related('barbero', 'servicio').order_by('-inicio')
     
-    # Estadísticas rápidas
+    # EstadÃ­sticas rÃ¡pidas
     total_reservas = reservas.count()
     reservas_confirmadas = reservas.filter(estado='Confirmada').count()
     reservas_pendientes = reservas.filter(estado='Pendiente').count()
@@ -200,7 +200,7 @@ def agenda_barbero(request):
         pagado=True  # Solo reservas pagadas
     ).select_related('cliente', 'servicio').order_by('-inicio')
     
-    # Estadísticas
+    # EstadÃ­sticas
     hoy = date.today()
     
     reservas_hoy = reservas.filter(inicio__date=hoy).count()
@@ -232,7 +232,7 @@ def agenda_barbero(request):
 
 
 def obtener_info_servicio(request):
-    """Vista AJAX para obtener información del servicio (precio y duración)"""
+    """Vista AJAX para obtener informaciÃ³n del servicio (precio y duraciÃ³n)"""
     if request.method == 'GET':
         servicio_id = request.GET.get('servicio_id')
         
@@ -250,7 +250,7 @@ def obtener_info_servicio(request):
         except Servicio.DoesNotExist:
             return JsonResponse({'error': 'Servicio no encontrado'})
     
-    return JsonResponse({'error': 'Método no permitido'})
+    return JsonResponse({'error': 'MÃ©todo no permitido'})
 
 
 
@@ -281,7 +281,7 @@ def obtener_horas_disponibles_unified(request):
             formato=formato
         )
         
-        # Formato de respuesta según el tipo de frontend
+        # Formato de respuesta segÃºn el tipo de frontend
         if formato == 'completo':
             return JsonResponse({
                 'fecha': fecha_str,
@@ -337,7 +337,7 @@ def cancelar_reserva(request):
         if reserva.estado == 'Cancelada':
             return JsonResponse({
                 'success': False,
-                'message': 'Esta reserva ya está cancelada'
+                'message': 'Esta reserva ya estÃ¡ cancelada'
             })
         
         if reserva.estado == 'Completada':
@@ -346,20 +346,20 @@ def cancelar_reserva(request):
                 'message': 'No se puede cancelar una reserva completada'
             })
         
-        # Verificar tiempo límite (opcional: no cancelar si falta menos de 2 horas)
+        # Verificar tiempo lÃ­mite (opcional: no cancelar si falta menos de 2 horas)
         tiempo_limite = timezone.now() + timedelta(hours=2)
         
         if reserva.inicio <= tiempo_limite:
             return JsonResponse({
                 'success': False,
-                'message': 'No se puede cancelar con menos de 2 horas de anticipación'
+                'message': 'No se puede cancelar con menos de 2 horas de anticipaciÃ³n'
             })
         
         # Cancelar la reserva
         reserva.estado = 'Cancelada'
         reserva.save()
         
-        # Determinar quién canceló para el mensaje
+        # Determinar quiÃ©n cancelÃ³ para el mensaje
         cancelado_por = 'barbero' if es_barbero else 'cliente'
         
         return JsonResponse({
@@ -371,7 +371,7 @@ def cancelar_reserva(request):
     except json.JSONDecodeError:
         return JsonResponse({
             'success': False,
-            'message': 'Datos inválidos'
+            'message': 'Datos invÃ¡lidos'
         })
     except Exception as e:
         return JsonResponse({
@@ -381,12 +381,12 @@ def cancelar_reserva(request):
 
 
 # ----------------------------------------------------------------------
-# 💡 FUNCIÓN DE CREACIÓN DE RESERVA (Actualizada con @login_required)
+# ðŸ’¡ FUNCIÃ“N DE CREACIÃ“N DE RESERVA (Actualizada con @login_required)
 # ----------------------------------------------------------------------
 
 @login_required
 def crearReserva(request):
-    # Obtener servicio preseleccionado si viene de la página de inicio
+    # Obtener servicio preseleccionado si viene de la pÃ¡gina de inicio
     servicio_id = request.GET.get('servicio_id')
     initial_data = {}
     if servicio_id:
@@ -458,9 +458,9 @@ def crearReserva(request):
                 # In development mode, provide more helpful messages
                 from django.conf import settings
                 if settings.DEBUG and getattr(e, 'error_code') == 'invalid_credentials':
-                    messages.warning(request, '⚠️ Modo Desarrollo: MercadoPago no está configurado.')
+                    messages.warning(request, 'âš ï¸ Modo Desarrollo: MercadoPago no estÃ¡ configurado.')
                     messages.info(request, 'Para configurar MercadoPago, agrega tus credenciales en el archivo .env')
-                    messages.info(request, 'Por ahora, la reserva se creará sin pago para pruebas.')
+                    messages.info(request, 'Por ahora, la reserva se crearÃ¡ sin pago para pruebas.')
                     
                     # In development, create the reservation directly without payment
                     try:
@@ -473,7 +473,7 @@ def crearReserva(request):
                             estado='Confirmada',  # Auto-confirm in development
                             notas='Reserva creada en modo desarrollo sin pago'
                         )
-                        messages.success(request, f'✅ Reserva creada exitosamente (modo desarrollo)')
+                        messages.success(request, f'âœ… Reserva creada exitosamente (modo desarrollo)')
                         return redirect('confirmacion_reserva')
                     except Exception as dev_error:
                         messages.error(request, f'Error al crear reserva de desarrollo: {str(dev_error)}')
@@ -485,16 +485,16 @@ def crearReserva(request):
                     if getattr(e, 'error_code') == 'expired_reservation':
                         messages.info(request, 'Puedes intentar crear una nueva reserva.')
                     elif getattr(e, 'error_code') == 'invalid_credentials':
-                        messages.error(request, 'Hay un problema con la configuración del sistema. Por favor contacta al soporte.')
+                        messages.error(request, 'Hay un problema con la configuraciÃ³n del sistema. Por favor contacta al soporte.')
                 
             except ValueError as e:
                 messages.error(request, str(e))
                 logger.warning(f"Validation error in crearReserva for user {request.user.id}: {str(e)}")
             except Exception as e:
-                messages.error(request, 'Error inesperado al crear la reserva. Por favor inténtalo de nuevo.')
+                messages.error(request, 'Error inesperado al crear la reserva. Por favor intÃ©ntalo de nuevo.')
                 logger.error(f"Unexpected error in crearReserva for user {request.user.id}: {str(e)}", exc_info=True)
         else:
-            # Los errores del formulario se mostrarán automáticamente en el template
+            # Los errores del formulario se mostrarÃ¡n automÃ¡ticamente en el template
             logger.warning(f"Form is not valid. Errors: {form.errors}")
             logger.warning(f"Form data: {request.POST}")
             messages.error(request, 'Por favor corrige los errores en el formulario.')
@@ -504,7 +504,7 @@ def crearReserva(request):
     return render(request, 'crearReserva.html', {'form': form})
 
 def obtener_disponibilidad_detallada(request):
-    """Vista para obtener información detallada de disponibilidad incluyendo bloqueos temporales"""
+    """Vista para obtener informaciÃ³n detallada de disponibilidad incluyendo bloqueos temporales"""
     if request.method == 'GET':
         fecha_str = request.GET.get('fecha')
         barbero_id = request.GET.get('barbero')
@@ -516,7 +516,7 @@ def obtener_disponibilidad_detallada(request):
             fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
             barbero = Barbero.objects.get(id=barbero_id)
         except (ValueError, Barbero.DoesNotExist):
-            return JsonResponse({'error': 'Fecha o barbero inválidos'})
+            return JsonResponse({'error': 'Fecha o barbero invÃ¡lidos'})
         
         from .services.availability_service import AvailabilityService
         
@@ -543,7 +543,7 @@ def obtener_disponibilidad_detallada(request):
             'total_bloqueadas': len(blocked_slots['reservas']) + len(blocked_slots['temporary'])
         })
     
-    return JsonResponse({'error': 'Método no permitido'})
+    return JsonResponse({'error': 'MÃ©todo no permitido'})
 
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -613,7 +613,7 @@ def payment_success(request):
         # Validate request method
         if request.method not in ['GET', 'POST']:
             logger.warning(f"Invalid method {request.method} for payment success callback")
-            messages.error(request, 'Método de acceso inválido.')
+            messages.error(request, 'MÃ©todo de acceso invÃ¡lido.')
             return redirect('inicio')
         
         # Get and validate parameters from MercadoPago callback
@@ -632,14 +632,14 @@ def payment_success(request):
         # Validate required parameters
         if not (payment_id or collection_id):
             logger.error("Payment success callback missing payment_id and collection_id")
-            messages.error(request, 'Faltan parámetros requeridos del pago.')
+            messages.error(request, 'Faltan parÃ¡metros requeridos del pago.')
             return redirect('inicio')
         
         # Validate status indicates success
         actual_status = status or collection_status
         if actual_status and actual_status not in ['approved', 'authorized']:
             logger.warning(f"Payment success callback with non-success status: {actual_status}")
-            messages.warning(request, f'El estado del pago no indica éxito: {actual_status}')
+            messages.warning(request, f'El estado del pago no indica Ã©xito: {actual_status}')
             return redirect('payment_failure') + f'?status={actual_status}'
         
         # Get temp_reservation_id from URL parameter or session
@@ -681,7 +681,7 @@ def payment_success(request):
                         'servicio': existing_transaction.reserva.servicio,
                         'inicio': existing_transaction.reserva.inicio,
                         'fin': existing_transaction.reserva.fin,
-                        'success_message': '¡Reserva confirmada exitosamente!'
+                        'success_message': 'Â¡Reserva confirmada exitosamente!'
                     })
                 else:
                     # Create final reservation directly (simplified for development)
@@ -738,7 +738,7 @@ def payment_success(request):
                             'servicio': reserva_final.servicio,
                             'inicio': reserva_final.inicio,
                             'fin': reserva_final.fin,
-                            'success_message': '¡Pago procesado y reserva confirmada exitosamente!'
+                            'success_message': 'Â¡Pago procesado y reserva confirmada exitosamente!'
                         })
                         
                         logger.info(f"Final reservation created: ID {reserva_final.id} for user {cliente_user.email}")
@@ -752,7 +752,7 @@ def payment_success(request):
                             'servicio': temp_res.servicio,
                             'inicio': temp_res.inicio,
                             'fin': temp_res.fin,
-                            'error_message': 'Usuario no encontrado. Inicia sesión nuevamente.'
+                            'error_message': 'Usuario no encontrado. Inicia sesiÃ³n nuevamente.'
                         })
                     except Exception as e:
                         logger.error(f"Error creating final reservation: {str(e)}")
@@ -782,7 +782,7 @@ def payment_success(request):
         
     except Exception as e:
         logger.error(f"Error in payment success callback: {str(e)}")
-        messages.error(request, 'Hubo un error al procesar la confirmación del pago.')
+        messages.error(request, 'Hubo un error al procesar la confirmaciÃ³n del pago.')
         return redirect('inicio')
 
 
@@ -795,7 +795,7 @@ def payment_failure(request):
         # Validate request method
         if request.method not in ['GET', 'POST']:
             logger.warning(f"Invalid method {request.method} for payment failure callback")
-            messages.error(request, 'Método de acceso inválido.')
+            messages.error(request, 'MÃ©todo de acceso invÃ¡lido.')
             return redirect('inicio')
         
         # Get and validate parameters from MercadoPago callback
@@ -882,7 +882,7 @@ def payment_pending(request):
         # Validate request method
         if request.method not in ['GET', 'POST']:
             logger.warning(f"Invalid method {request.method} for payment pending callback")
-            messages.error(request, 'Método de acceso inválido.')
+            messages.error(request, 'MÃ©todo de acceso invÃ¡lido.')
             return redirect('inicio')
         
         # Get and validate parameters from MercadoPago callback
@@ -937,15 +937,15 @@ def payment_pending(request):
                 
                 # Determine pending message based on payment type
                 if payment_type in ['bank_transfer', 'atm']:
-                    context['pending_message'] = 'Tu pago está siendo procesado por el banco. Te notificaremos cuando se confirme.'
+                    context['pending_message'] = 'Tu pago estÃ¡ siendo procesado por el banco. Te notificaremos cuando se confirme.'
                 elif payment_type == 'ticket':
-                    context['pending_message'] = 'Tu pago en efectivo está pendiente. Una vez que realices el pago, se confirmará automáticamente.'
+                    context['pending_message'] = 'Tu pago en efectivo estÃ¡ pendiente. Una vez que realices el pago, se confirmarÃ¡ automÃ¡ticamente.'
                 else:
-                    context['pending_message'] = 'Tu pago está siendo procesado. Te notificaremos cuando se confirme.'
+                    context['pending_message'] = 'Tu pago estÃ¡ siendo procesado. Te notificaremos cuando se confirme.'
                     
             except (TemporaryReservation.DoesNotExist, ValueError):
                 logger.warning(f"Temporary reservation {temp_reservation_id} not found in pending callback")
-                context['warning_message'] = 'No se encontraron detalles de la reserva, pero el pago está siendo procesado.'
+                context['warning_message'] = 'No se encontraron detalles de la reserva, pero el pago estÃ¡ siendo procesado.'
         
         logger.info(f"Payment pending callback: payment_id={payment_id}, status={status}, temp_reservation={temp_reservation_id}")
         
@@ -1133,7 +1133,7 @@ def reserva_payment_details(request, reserva_id):
         if not (es_cliente or es_barbero):
             return JsonResponse({
                 'success': False,
-                'message': 'No tienes permisos para ver esta información'
+                'message': 'No tienes permisos para ver esta informaciÃ³n'
             }, status=403)
         
         # Get payment transaction details
@@ -1189,3 +1189,89 @@ def reserva_payment_details(request, reserva_id):
             'success': False,
             'message': 'Error interno del servidor'
         }, status=500)
+
+
+# ======================================================================
+# GESTIÃ“N DE BARBEROS (Solo para staff)
+# ======================================================================
+
+from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import get_object_or_404
+from .forms import BarberoForm
+
+@staff_member_required
+def gestionar_barberos(request):
+    """Lista todos los barberos"""
+    barberos = Barbero.objects.all().select_related('usuario')
+    return render(request, 'barberos/lista.html', {'barberos': barberos})
+
+@staff_member_required
+def crear_barbero(request):
+    """Crea un nuevo barbero"""
+    if request.method == 'POST':
+        form = BarberoForm(request.POST, request.FILES)
+        if form.is_valid():
+            barbero = form.save()
+            
+            # Mensaje de Ã©xito
+            messages.success(
+                request, 
+                f'âœ… Barbero "{barbero.nombre}" creado exitosamente con usuario "{barbero.usuario.username}".'
+            )
+            messages.info(
+                request,
+                f'ðŸ“§ Credenciales: Usuario: {barbero.usuario.username} | Email: {barbero.usuario.email}'
+            )
+            
+            return redirect('gestionar_barberos')
+    else:
+        form = BarberoForm()
+    
+    return render(request, 'barberos/form.html', {
+        'form': form,
+        'titulo': 'Crear Nuevo Barbero',
+        'accion': 'Crear'
+    })
+
+@staff_member_required
+def editar_barbero(request, barbero_id):
+    """Edita un barbero existente"""
+    barbero = get_object_or_404(Barbero, pk=barbero_id)
+    
+    if request.method == 'POST':
+        form = BarberoForm(request.POST, request.FILES, instance=barbero)
+        if form.is_valid():
+            barbero = form.save()
+            messages.success(request, f'âœ… Barbero "{barbero.nombre}" actualizado exitosamente.')
+            return redirect('gestionar_barberos')
+    else:
+        form = BarberoForm(instance=barbero)
+    
+    return render(request, 'barberos/form.html', {
+        'form': form,
+        'barbero': barbero,
+        'titulo': f'Editar: {barbero.nombre}',
+        'accion': 'Actualizar'
+    })
+
+@staff_member_required
+def eliminar_barbero(request, barbero_id):
+    """Elimina un barbero"""
+    barbero = get_object_or_404(Barbero, pk=barbero_id)
+    
+    if request.method == 'POST':
+        nombre = barbero.nombre
+        barbero.delete()
+        messages.success(request, f'Barbero "{nombre}" eliminado exitosamente.')
+        return redirect('gestionar_barberos')
+    
+    reservas_count = Reserva.objects.filter(barbero=barbero).count()
+    
+    return render(request, 'barberos/eliminar.html', {
+        'barbero': barbero,
+        'reservas_count': reservas_count
+    })
+
+
+
+

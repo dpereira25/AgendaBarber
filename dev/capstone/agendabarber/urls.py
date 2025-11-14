@@ -50,6 +50,12 @@ urlpatterns = [
     
     # Payment details API
     path('api/reserva/<int:reserva_id>/payment-details/', views.reserva_payment_details, name='reserva_payment_details'),
+    
+    # Gestión de Barberos
+    path('barberos/', views.gestionar_barberos, name='gestionar_barberos'),
+    path('barberos/crear/', views.crear_barbero, name='crear_barbero'),
+    path('barberos/<int:barbero_id>/editar/', views.editar_barbero, name='editar_barbero'),
+    path('barberos/<int:barbero_id>/eliminar/', views.eliminar_barbero, name='eliminar_barbero'),
 ]
 
 # Configuración de archivos estáticos y media (fotos de barberos/servicios) en entorno de desarrollo

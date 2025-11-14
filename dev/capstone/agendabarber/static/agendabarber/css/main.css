@@ -3622,3 +3622,171 @@ body.dark-mode .auth-form .form-control {
         min-height: calc(100vh - 60px);
     }
 }
+
+/* ============================================
+   GESTIÓN DE BARBEROS - ESTILOS MEJORADOS
+   ============================================ */
+
+/* Formulario de barbero */
+#barberoForm .card-header {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+}
+
+#barberoForm .form-label {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+#barberoForm .text-danger {
+    color: #dc3545 !important;
+}
+
+/* Sección de nuevo usuario */
+#nuevoUsuarioFields {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Cards de barberos en lista */
+.card.shadow-sm {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.card.shadow-sm:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3) !important;
+}
+
+/* Badges de usuario */
+.alert-success {
+    background-color: rgba(25, 135, 84, 0.1);
+    border-color: rgba(25, 135, 84, 0.2);
+    color: var(--text-color);
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.2);
+    color: var(--text-color);
+}
+
+/* Botones de acción */
+.btn-outline-warning {
+    color: #ffc107;
+    border-color: #ffc107;
+}
+
+.btn-outline-warning:hover {
+    background-color: #ffc107;
+    color: #000;
+}
+
+/* Modo oscuro para gestión de barberos */
+body.dark-mode #barberoForm .card-header {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+}
+
+body.dark-mode .card.shadow-sm {
+    background-color: #2d2d2d;
+    border-color: rgba(255, 193, 7, 0.3);
+}
+
+body.dark-mode .alert-success {
+    background-color: rgba(25, 135, 84, 0.2);
+    border-color: rgba(25, 135, 84, 0.3);
+}
+
+body.dark-mode .alert-warning {
+    background-color: rgba(255, 193, 7, 0.2);
+    border-color: rgba(255, 193, 7, 0.3);
+}
+
+body.dark-mode .alert-info {
+    background-color: rgba(13, 110, 253, 0.2);
+    border-color: rgba(13, 110, 253, 0.3);
+}
+
+/* Contenedor para el select de experiencia */
+#barberoForm .experiencia-wrapper {
+    position: relative;
+}
+
+/* Limitar tamaño del select de experiencia */
+#barberoForm select[name="experiencia"] {
+    transition: all 0.2s ease;
+    width: 100%;
+    display: block;
+}
+
+/* Cuando size=1 (cerrado) */
+#barberoForm select[name="experiencia"][size="1"] {
+    height: 38px;
+    overflow: hidden;
+}
+
+/* Cuando size=6 (abierto) - se posiciona absolutamente desde el campo hacia abajo */
+#barberoForm select[name="experiencia"][size="6"] {
+    position: relative;
+    width: 100%;
+    height: auto !important;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border: 2px solid #ffc107;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 0.375rem;
+    z-index: 1000;
+}
+
+/* Opciones del select */
+#barberoForm select[name="experiencia"] option {
+    padding: 10px 12px;
+    line-height: 1.5;
+}
+
+#barberoForm select[name="experiencia"] option:hover {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+/* Asegurar que la primera opción sea visible */
+#barberoForm select[name="experiencia"] option:first-child {
+    margin-top: 2px;
+}
+
+/* Modo oscuro para el select abierto */
+body.dark-mode #barberoForm select[name="experiencia"][size="6"] {
+    background: #2d2d2d;
+    border-color: #ff9800;
+    color: #fff;
+}
+
+body.dark-mode #barberoForm select[name="experiencia"] option:hover {
+    background-color: rgba(255, 152, 0, 0.2);
+}
+
+/* Responsive para formulario de barberos */
+@media (max-width: 768px) {
+    #barberoForm .card-header h3 {
+        font-size: 1.3rem;
+    }
+    
+    #barberoForm .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    #barberoForm select[name="experiencia"] {
+        max-height: 150px;
+    }
+}

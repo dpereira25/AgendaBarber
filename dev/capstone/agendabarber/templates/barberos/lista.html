@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Barberos{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1><i class="fas fa-users-cog me-2 text-warning"></i>Gestión de Barberos</h1>
+            <p class="text-muted">Administra los barberos del sistema</p>
+        </div>
+        <a href="{% url 'crear_barbero' %}" class="btn btn-warning text-dark btn-lg">
+            <i class="fas fa-plus me-2"></i>Nuevo Barbero
+        </a>
+    </div>
+
+    {% if barberos %}
+    <div class="row">
+        {% for barbero in barberos %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        {% if barbero.foto %}
+                        <img src="{{ barbero.foto.url }}" alt="{{ barbero.nombre }}" 
+                             class="rounded-circle me-3 border border-2 border-warning" 
+                             style="width: 70px; height: 70px; object-fit: cover;">
+                        {% else %}
+                        <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center me-3 border border-2 border-warning" 
+                             style="width: 70px; height: 70px;">
+                            <i class="fas fa-user-tie fa-2x text-dark"></i>
+                        </div>
+                        {% endif %}
+                        <div class="flex-grow-1">
+                            <h5 class="mb-1">{{ barbero.nombre }}</h5>
+                            <small class="text-muted">
+                                <i class="fas fa-award me-1"></i>{{ barbero.experiencia }} año{{ barbero.experiencia|pluralize }}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {% if barbero.usuario %}
+                        <div class="alert alert-success py-2 px-3 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user-check me-2"></i>
+                                <div class="small">
+                                    <strong>Usuario:</strong> {{ barbero.usuario.username }}<br>
+                                    {% if barbero.usuario.email %}
+                                    <span class="text-muted">{{ barbero.usuario.email }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning py-2 px-3 mb-2">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <small>Sin cuenta de usuario</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'editar_barbero' barbero.id %}" class="btn btn-sm btn-outline-warning flex-fill">
+                            <i class="fas fa-edit me-1"></i>Editar
+                        </a>
+                        <a href="{% url 'eliminar_barbero' barbero.id %}" class="btn btn-sm btn-outline-danger flex-fill">
+                            <i class="fas fa-trash me-1"></i>Eliminar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-user-tie fa-5x text-warning"></i>
+            </div>
+            <h4>No hay barberos registrados</h4>
+            <p class="text-muted">Comienza agregando tu primer barbero al sistema</p>
+            <a href="{% url 'crear_barbero' %}" class="btn btn-warning text-dark btn-lg mt-3">
+                <i class="fas fa-plus me-2"></i>Crear Primer Barbero
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

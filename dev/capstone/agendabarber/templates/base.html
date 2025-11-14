@@ -92,6 +92,9 @@
                                 
                                 {% if user.is_staff %}
                                     <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'gestionar_barberos' %}">
+                                        <i class="fas fa-users-cog me-2"></i>Gestionar Barberos
+                                    </a></li>
                                     <li><a class="dropdown-item" href="/admin/">
                                         <i class="fas fa-cog me-2"></i>Administración Django
                                     </a></li>

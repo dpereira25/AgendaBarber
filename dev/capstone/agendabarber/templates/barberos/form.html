@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="mb-0"><i class="fas fa-user-tie me-2"></i>{{ titulo }}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="barberoForm">
+                        {% csrf_token %}
+                        
+                        <h5 class="mb-3"><i class="fas fa-info-circle me-2"></i>Información del Barbero</h5>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.nombre.id_for_label }}" class="form-label">
+                                {{ form.nombre.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.nombre }}
+                            {% if form.nombre.errors %}
+                            <div class="text-danger small">{{ form.nombre.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.experiencia.id_for_label }}" class="form-label">
+                                {{ form.experiencia.label }} <span class="text-danger">*</span>
+                            </label>
+                            <div class="experiencia-wrapper">
+                                {{ form.experiencia }}
+                            </div>
+                            {% if form.experiencia.errors %}
+                            <div class="text-danger small">{{ form.experiencia.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.foto.id_for_label }}" class="form-label">
+                                {{ form.foto.label }}
+                            </label>
+                            {{ form.foto }}
+                            {% if barbero.foto %}
+                            <div class="mt-2">
+                                <img src="{{ barbero.foto.url }}" alt="{{ barbero.nombre }}" 
+                                     class="img-thumbnail" style="max-width: 200px;">
+                                <p class="text-muted small mt-1">Foto actual - selecciona un archivo para cambiarla</p>
+                            </div>
+                            {% endif %}
+                            {% if form.foto.errors %}
+                            <div class="text-danger small">{{ form.foto.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if not barbero %}
+                        {# Solo mostrar campos de usuario al crear #}
+                        <hr class="my-4">
+                        
+                        <h5 class="mb-3"><i class="fas fa-user-cog me-2"></i>Cuenta de Usuario</h5>
+                        
+                        <div class="alert alert-info small mb-3">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Se creará una cuenta de usuario para que el barbero pueda iniciar sesión y ver su agenda de reservas.
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.nuevo_username.id_for_label }}" class="form-label">
+                                {{ form.nuevo_username.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.nuevo_username }}
+                            {% if form.nuevo_username.errors %}
+                            <div class="text-danger small">{{ form.nuevo_username.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.nuevo_email.id_for_label }}" class="form-label">
+                                {{ form.nuevo_email.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.nuevo_email }}
+                            {% if form.nuevo_email.errors %}
+                            <div class="text-danger small">{{ form.nuevo_email.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.nuevo_password.id_for_label }}" class="form-label">
+                                    {{ form.nuevo_password.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.nuevo_password }}
+                                <small class="form-text text-muted">Mínimo 8 caracteres</small>
+                                {% if form.nuevo_password.errors %}
+                                <div class="text-danger small">{{ form.nuevo_password.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.nuevo_password_confirm.id_for_label }}" class="form-label">
+                                    {{ form.nuevo_password_confirm.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.nuevo_password_confirm }}
+                                {% if form.nuevo_password_confirm.errors %}
+                                <div class="text-danger small">{{ form.nuevo_password_confirm.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                        {# Al editar, mostrar información del usuario (solo lectura) #}
+                        <hr class="my-4">
+                        
+                        <h5 class="mb-3"><i class="fas fa-user-cog me-2"></i>Cuenta de Usuario</h5>
+                        
+                        {% if barbero.usuario %}
+                        <div class="alert alert-success">
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <strong><i class="fas fa-user me-2"></i>Usuario:</strong> {{ barbero.usuario.username }}
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong><i class="fas fa-envelope me-2"></i>Email:</strong> {{ barbero.usuario.email }}
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                <i class="fas fa-lock me-1"></i>Las credenciales de usuario no se pueden modificar desde aquí por seguridad.
+                            </small>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Este barbero no tiene una cuenta de usuario asociada.
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                        
+                        <div class="d-flex gap-2 mt-4">
+                            <a href="{% url 'gestionar_barberos' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-warning text-dark">
+                                <i class="fas fa-save me-2"></i>{{ accion }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generar username basado en el nombre del barbero
+    const nombreInput = document.getElementById('{{ form.nombre.id_for_label }}');
+    const usernameInput = document.getElementById('{{ form.nuevo_username.id_for_label }}');
+    
+    if (nombreInput && usernameInput) {
+        nombreInput.addEventListener('blur', function() {
+            if (!usernameInput.value) {
+                // Generar username: convertir a minúsculas, reemplazar espacios con guiones bajos
+                const username = this.value.toLowerCase()
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Quitar acentos
+                    .replace(/\s+/g, '_')
+                    .replace(/[^a-z0-9_]/g, '');
+                usernameInput.value = username;
+            }
+        });
+    }
+    
+    // Limitar visualmente el dropdown de experiencia
+    const experienciaSelect = document.querySelector('select[name="experiencia"]');
+    
+    if (experienciaSelect) {
+        // Inicialmente cerrado
+        experienciaSelect.setAttribute('size', '1');
+        
+        // Cuando se hace click, mostrar el dropdown con size 6
+        experienciaSelect.addEventListener('focus', function() {
+            this.setAttribute('size', '6');
+            
+            // Asegurar que la opción seleccionada esté visible
+            const selectedIndex = this.selectedIndex;
+            if (selectedIndex > 0) {
+                // Hacer scroll para que la opción seleccionada esté en la parte superior
+                this.options[selectedIndex].scrollIntoView({ block: 'nearest' });
+            }
+        });
+        
+        // Cuando se selecciona una opción, volver a size 1
+        experienciaSelect.addEventListener('change', function() {
+            this.setAttribute('size', '1');
+            this.blur(); // Cerrar el dropdown
+        });
+        
+        // Si se hace click fuera, cerrar el dropdown
+        experienciaSelect.addEventListener('blur', function() {
+            setTimeout(() => {
+                this.setAttribute('size', '1');
+            }, 200);
+        });
+        
+        // Cerrar con tecla Escape
+        experienciaSelect.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.setAttribute('size', '1');
+                this.blur();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
