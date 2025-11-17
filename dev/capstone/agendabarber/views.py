@@ -73,7 +73,7 @@ def confirmacionReserva(request):
     return render(request, 'confirmacionReserva.html')
 
 # ----------------------------------------------------------------------
-# ðŸ’¡ NUEVA FUNCIÃ“N: REGISTRO DE USUARIO
+# REGISTRO DE USUARIO
 # ----------------------------------------------------------------------
 def registro_usuario(request):
     if request.method == 'POST':
@@ -1286,7 +1286,7 @@ def contacto(request):
     context = {
         'telefono': '+569 34135145',
         'email': 'info@cronocorte.cl',
-        'direccion': 'Av. Principal 123, Santiago',
+        'direccion': 'Nueva Oriente 9537, El Bosque',
         'whatsapp': '56934135145',  # Sin + ni espacios para el link
         'instagram': 'https://www.instagram.com/jamonbarber/',
         'instagram_user': '@jamonbarber',

@@ -85,6 +85,7 @@ body {
     align-items: center;
     transition: var(--transition-normal);
     text-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+    padding: 0.25rem 0;
 }
 
 .navbar-brand:hover {
@@ -93,10 +94,40 @@ body {
     text-shadow: 0 4px 12px rgba(212, 175, 55, 0.6);
 }
 
+/* Logo del navbar */
+.navbar-logo {
+    height: 70px;
+    width: auto;
+    max-width: 350px;
+    object-fit: contain;
+    transition: var(--transition-normal);
+    filter: drop-shadow(0 2px 8px rgba(212, 175, 55, 0.4)) brightness(1.1);
+    margin: -10px 0;
+}
+
+.navbar-brand:hover .navbar-logo {
+    transform: scale(1.05);
+    filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.6)) brightness(1.2);
+}
+
 @media (max-width: 768px) {
     .navbar-brand {
         font-size: 1.4rem;
         letter-spacing: 1px;
+    }
+    
+    .navbar-logo {
+        height: 60px;
+        max-width: 280px;
+        margin: -8px 0;
+    }
+}
+
+@media (max-width: 576px) {
+    .navbar-logo {
+        height: 50px;
+        max-width: 220px;
+        margin: -6px 0;
     }
 }
 
@@ -3189,6 +3220,17 @@ body.dark-mode .schedule-info .small {
     color: var(--accent-color) !important;
 }
 
+/* Fix para números en tarjetas de estadísticas del dashboard */
+.card-body h2.text-primary {
+    color: #1a1a1a !important;
+    background: none !important;
+}
+
+body.dark-mode .card-body h2.text-primary {
+    color: #ffffff !important;
+    background: none !important;
+}
+
 .text-info {
     color: var(--accent-color) !important;
 }
@@ -3230,6 +3272,14 @@ body.dark-mode .btn-primary {
 body.dark-mode .text-primary,
 body.dark-mode .text-info {
     color: var(--accent-light) !important;
+}
+
+/* Asegurar que los números de estadísticas sean legibles */
+body.dark-mode .card-body h2.text-primary,
+body.dark-mode .card-body h2.text-success,
+body.dark-mode .card-body h2.text-info,
+body.dark-mode .card-body h2.text-warning {
+    background: none !important;
 }
 
 /* Focus states */
@@ -3621,4 +3671,386 @@ body.dark-mode .auth-form .form-control {
     .auth-form-container {
         min-height: calc(100vh - 60px);
     }
+}
+
+/* ============================================
+   GESTIÓN DE BARBEROS - ESTILOS MEJORADOS
+   ============================================ */
+
+/* Formulario de barbero */
+#barberoForm .card-header {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+}
+
+#barberoForm .form-label {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+#barberoForm .text-danger {
+    color: #dc3545 !important;
+}
+
+/* Sección de nuevo usuario */
+#nuevoUsuarioFields {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Cards de barberos en lista */
+.card.shadow-sm {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.card.shadow-sm:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3) !important;
+}
+
+/* Badges de usuario */
+.alert-success {
+    background-color: rgba(25, 135, 84, 0.1);
+    border-color: rgba(25, 135, 84, 0.2);
+    color: var(--text-color);
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.2);
+    color: var(--text-color);
+}
+
+/* Botones de acción */
+.btn-outline-warning {
+    color: #ffc107;
+    border-color: #ffc107;
+}
+
+.btn-outline-warning:hover {
+    background-color: #ffc107;
+    color: #000;
+}
+
+/* Modo oscuro para gestión de barberos */
+body.dark-mode #barberoForm .card-header {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+}
+
+body.dark-mode .card.shadow-sm {
+    background-color: #2d2d2d;
+    border-color: rgba(255, 193, 7, 0.3);
+}
+
+body.dark-mode .alert-success {
+    background-color: rgba(25, 135, 84, 0.2);
+    border-color: rgba(25, 135, 84, 0.3);
+}
+
+body.dark-mode .alert-warning {
+    background-color: rgba(255, 193, 7, 0.2);
+    border-color: rgba(255, 193, 7, 0.3);
+}
+
+body.dark-mode .alert-info {
+    background-color: rgba(13, 110, 253, 0.2);
+    border-color: rgba(13, 110, 253, 0.3);
+}
+
+/* Contenedor para el select de experiencia */
+#barberoForm .experiencia-wrapper {
+    position: relative;
+}
+
+/* Limitar tamaño del select de experiencia */
+#barberoForm select[name="experiencia"] {
+    transition: all 0.2s ease;
+    width: 100%;
+    display: block;
+}
+
+/* Cuando size=1 (cerrado) */
+#barberoForm select[name="experiencia"][size="1"] {
+    height: 38px;
+    overflow: hidden;
+}
+
+/* Cuando size=6 (abierto) - se posiciona absolutamente desde el campo hacia abajo */
+#barberoForm select[name="experiencia"][size="6"] {
+    position: relative;
+    width: 100%;
+    height: auto !important;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border: 2px solid #ffc107;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 0.375rem;
+    z-index: 1000;
+}
+
+/* Opciones del select */
+#barberoForm select[name="experiencia"] option {
+    padding: 10px 12px;
+    line-height: 1.5;
+}
+
+#barberoForm select[name="experiencia"] option:hover {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+/* Asegurar que la primera opción sea visible */
+#barberoForm select[name="experiencia"] option:first-child {
+    margin-top: 2px;
+}
+
+/* Modo oscuro para el select abierto */
+body.dark-mode #barberoForm select[name="experiencia"][size="6"] {
+    background: #2d2d2d;
+    border-color: #ff9800;
+    color: #fff;
+}
+
+body.dark-mode #barberoForm select[name="experiencia"] option:hover {
+    background-color: rgba(255, 152, 0, 0.2);
+}
+
+/* Responsive para formulario de barberos */
+@media (max-width: 768px) {
+    #barberoForm .card-header h3 {
+        font-size: 1.3rem;
+    }
+    
+    #barberoForm .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    #barberoForm select[name="experiencia"] {
+        max-height: 150px;
+    }
+}
+
+
+/* ============================================
+   BOTÓN FLOTANTE DE WHATSAPP
+   ============================================ */
+
+.whatsapp-float {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    bottom: 30px;
+    right: 30px;
+    background-color: #25d366;
+    color: #FFF;
+    border-radius: 50px;
+    text-align: center;
+    font-size: 30px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.whatsapp-float:hover {
+    background-color: #128c7e;
+    transform: scale(1.1);
+    box-shadow: 2px 2px 15px rgba(0, 0, 0, 0.4);
+    color: #FFF;
+}
+
+.whatsapp-float i {
+    margin-top: 3px;
+}
+
+/* Animación de pulso */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(37, 211, 102, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+    }
+}
+
+.whatsapp-float {
+    animation: pulse 2s infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .whatsapp-float {
+        width: 50px;
+        height: 50px;
+        font-size: 25px;
+        bottom: 20px;
+        right: 20px;
+    }
+}
+
+/* Modo oscuro */
+body.dark-mode .whatsapp-float {
+    box-shadow: 2px 2px 10px rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .whatsapp-float:hover {
+    box-shadow: 2px 2px 15px rgba(255, 255, 255, 0.3);
+}
+
+
+/* ===== ESTILOS DE AGENDA DEL BARBERO ===== */
+
+/* Botones de filtro - Tema Dorado */
+.btn-group .btn-outline-primary {
+    color: #D4AF37;
+    border-color: #D4AF37;
+}
+
+.btn-group .btn-outline-primary:hover,
+.btn-group .btn-outline-primary.active {
+    background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+    border-color: #D4AF37;
+    color: #000;
+}
+
+.btn-group .btn-outline-success {
+    color: #0891b2;
+    border-color: #0891b2;
+}
+
+.btn-group .btn-outline-success:hover,
+.btn-group .btn-outline-success.active {
+    background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+    border-color: #0891b2;
+    color: #fff;
+}
+
+.btn-group .btn-outline-info {
+    color: #D4AF37;
+    border-color: #D4AF37;
+}
+
+.btn-group .btn-outline-info:hover,
+.btn-group .btn-outline-info.active {
+    background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+    border-color: #D4AF37;
+    color: #000;
+}
+
+.btn-group .btn-outline-warning {
+    color: #D4AF37;
+    border-color: #D4AF37;
+}
+
+.btn-group .btn-outline-warning:hover,
+.btn-group .btn-outline-warning.active {
+    background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+    border-color: #D4AF37;
+    color: #000;
+}
+
+/* Mejorar visibilidad de fechas en las tarjetas de reserva */
+.reserva-item .text-center .h4 {
+    color: #1a1a1a !important;
+    font-weight: 800;
+}
+
+.reserva-item .text-muted {
+    color: #495057 !important;
+    font-weight: 600;
+}
+
+.reserva-item .small {
+    color: #495057 !important;
+    font-weight: 600;
+}
+
+body.dark-mode .reserva-item .text-center .h4 {
+    color: #fff !important;
+}
+
+body.dark-mode .reserva-item .text-muted {
+    color: #adb5bd !important;
+}
+
+body.dark-mode .reserva-item .small {
+    color: #adb5bd !important;
+}
+
+/* ===== AGENDA BARBERO - RESPONSIVE ===== */
+@media (max-width: 768px) {
+    /* Hacer que los filtros se apilen verticalmente en móviles */
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.375rem !important;
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+    
+    /* Ajustar el input de fecha en móviles */
+    .input-group {
+        margin-top: 1rem;
+    }
+    
+    /* Mejorar el espaciado de las tarjetas de reserva en móviles */
+    .reserva-item .card-body .row {
+        text-align: center;
+    }
+    
+    .reserva-item .card-body .row > div {
+        margin-bottom: 1rem;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        padding-bottom: 1rem;
+    }
+    
+    .reserva-item .card-body .row > div:last-child {
+        border-bottom: none;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Hacer los botones de filtro más grandes y fáciles de tocar */
+    .btn-group .btn {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
+    
+    /* Ajustar el tamaño de las estadísticas */
+    .col-6 .card {
+        margin-bottom: 0.5rem;
+    }
+    
+    .col-6 .card h4 {
+        font-size: 1.5rem;
+    }
+    
+    .col-6 .card small {
+        font-size: 0.75rem;
+    }
+}
+
+body.dark-mode .reserva-item .card-body .row > div {
+    border-bottom-color: rgba(255,255,255,0.1);
 }

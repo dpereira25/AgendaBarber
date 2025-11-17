@@ -1,0 +1,396 @@
+RECOMENDACIONES DE IA PARA PRESENTACIONES:
+
+1. GAMMA.APP (https://gamma.app)
+   - La mejor opción para presentaciones automáticas
+   - Genera diseños profesionales con IA
+   - Exporta a PDF o PowerPoint
+   - Interfaz muy intuitiva
+   - GRATIS con límite mensual
+
+2. BEAUTIFUL.AI
+   - Diseños automáticos muy elegantes
+   - Plantillas profesionales
+   - Colaboración en tiempo real
+   - Versión gratuita limitada
+
+3. TOME.APP
+   - Presentaciones narrativas con IA
+   - Genera contenido e imágenes
+   - Muy visual y moderno
+   - Gratis con límites
+
+4. CANVA con Magic Design (canva.com)
+   - Conocido y fácil de usar
+   - IA para generar diseños
+   - Miles de plantillas
+   - Versión gratuita robusta
+
+RECOMENDACIÓN: Usa GAMMA.APP - es la más potente y fácil para generar presentaciones completas con IA.
+
+================================================================================
+
+PROMPT PARA GAMMA.APP (O CUALQUIER IA DE PRESENTACIONES):
+
+================================================================================
+
+Necesito crear una presentación profesional para mi proyecto de título de Ingeniería Informática. El proyecto se llama "Crono Corte" y es un sistema web de gestión de reservas para barberías.
+
+INFORMACIÓN DEL PROYECTO:
+
+CONTEXTO:
+Las barberías tradicionales en Chile enfrentan problemas significativos en la gestión de sus citas. Actualmente, la mayoría opera con sistemas manuales como agendas de papel, llamadas telefónicas o mensajes de WhatsApp. Esto genera múltiples inconvenientes: pérdida de reservas por olvidos, doble agendamiento del mismo horario, dificultad para los clientes de conocer la disponibilidad en tiempo real, y falta de métricas para tomar decisiones de negocio. Además, los clientes modernos esperan poder reservar servicios de forma digital, similar a como lo hacen con restaurantes o médicos. La pandemia aceleró la necesidad de digitalización en todos los sectores, incluyendo las barberías.
+
+PROBLEMA:
+El problema principal es la gestión ineficiente de reservas en barberías que genera:
+- Alto índice de no-show (clientes que no llegan): 20-30% de las citas
+- Pérdida de tiempo del barbero en confirmar citas por teléfono
+- Conflictos de horarios por doble agendamiento
+- Imposibilidad de gestionar pagos anticipados
+- Falta de visibilidad de horarios disponibles para clientes
+- Ausencia de métricas de negocio (servicios más solicitados, ingresos, horas pico)
+- Experiencia de usuario deficiente comparada con otros servicios digitales
+
+SOLUCIÓN:
+Crono Corte es una plataforma web que digitaliza completamente el proceso de reservas de barberías mediante:
+- Sistema de reservas online 24/7 con calendario interactivo
+- Visualización en tiempo real de horarios disponibles
+- Integración con MercadoPago para pagos anticipados
+- Prevención automática de conflictos de horarios
+- Dashboard con métricas y estadísticas de negocio
+- Gestión de múltiples barberos y servicios
+- Notificaciones y recordatorios automáticos
+- Interfaz moderna y responsive (móvil, tablet, desktop)
+- Modo oscuro para mejor experiencia de usuario
+
+PÚBLICO OBJETIVO:
+
+Primario:
+- Barberías pequeñas y medianas (1-5 barberos)
+- Ubicadas en zonas urbanas de Chile
+- Que buscan modernizar sus operaciones
+- Con clientela joven (18-45 años) familiarizada con tecnología
+
+Secundario:
+- Clientes finales que buscan comodidad al agendar
+- Barberos independientes que trabajan por cuenta propia
+- Cadenas de barberías que necesitan centralizar gestión
+
+Características del público:
+- Barberos: 25-50 años, conocimientos básicos de tecnología
+- Clientes: 18-45 años, usuarios activos de smartphones
+- Ambos valoran la eficiencia y la experiencia digital
+
+OBJETIVO GENERAL:
+Desarrollar e implementar un sistema web integral de gestión de reservas para barberías que digitalice el proceso de agendamiento, mejore la experiencia del usuario, reduzca el índice de no-show, y proporcione herramientas de análisis de negocio para la toma de decisiones informadas.
+
+OBJETIVOS ESPECÍFICOS:
+
+1. Diseñar e implementar un sistema de autenticación y autorización con roles diferenciados (Cliente, Barbero, Administrador) que garantice la seguridad y privacidad de los datos.
+
+2. Desarrollar un módulo de reservas online con calendario interactivo que permita a los clientes visualizar disponibilidad en tiempo real y agendar citas de forma autónoma.
+
+3. Implementar un sistema de prevención de conflictos de horarios que considere reservas confirmadas, reservas temporales durante el proceso de pago, y horarios de trabajo de cada barbero.
+
+4. Integrar la pasarela de pagos MercadoPago para permitir pagos anticipados, reducir el no-show y mejorar el flujo de caja de las barberías.
+
+5. Crear un dashboard interactivo con métricas de negocio (ingresos, reservas, servicios populares, horas pico) utilizando visualizaciones gráficas para facilitar la toma de decisiones.
+
+6. Diseñar una interfaz de usuario moderna, intuitiva y responsive que funcione correctamente en dispositivos móviles, tablets y computadores de escritorio.
+
+7. Implementar un sistema de gestión de barberos y servicios que permita configurar horarios de trabajo, precios, duraciones y especialidades.
+
+METODOLOGÍA:
+
+Metodología de Desarrollo: Ágil con enfoque iterativo
+
+Fases del Proyecto:
+
+Fase 1 - Análisis y Diseño (Semanas 1-2):
+- Investigación de sistemas similares y mejores prácticas
+- Definición de requisitos funcionales y no funcionales
+- Diseño de base de datos (modelos relacionales)
+- Creación de wireframes y mockups de interfaz
+- Definición de arquitectura del sistema
+- Selección de stack tecnológico
+
+Fase 2 - Desarrollo del Backend (Semanas 3-5):
+- Configuración del proyecto Django
+- Implementación de modelos de datos (Usuario, Barbero, Servicio, Reserva, etc.)
+- Desarrollo del sistema de autenticación y autorización
+- Creación de vistas y lógica de negocio
+- Implementación del servicio de disponibilidad de horarios
+- Desarrollo de API endpoints para frontend
+
+Fase 3 - Desarrollo del Frontend (Semanas 6-8):
+- Diseño de templates HTML con Bootstrap
+- Implementación de estilos CSS personalizados (tema dorado/negro)
+- Desarrollo de JavaScript para interactividad
+- Integración de Litepicker para selección de fechas
+- Creación de formularios con validación en tiempo real
+- Implementación de modo oscuro
+
+Fase 4 - Integración de Pagos (Semana 9):
+- Configuración de cuenta MercadoPago
+- Implementación de Checkout Pro
+- Desarrollo de sistema de reservas temporales
+- Manejo de webhooks para confirmación de pagos
+- Testing de flujo completo de pago
+
+Fase 5 - Dashboard y Estadísticas (Semana 10):
+- Implementación de Chart.js para gráficos
+- Desarrollo de queries para métricas de negocio
+- Creación de filtros por período
+- Implementación de exportación a CSV
+- Optimización de consultas a base de datos
+
+Fase 6 - Testing y Refinamiento (Semanas 11-12):
+- Testing funcional de todos los módulos
+- Testing de usabilidad con usuarios reales
+- Corrección de bugs y mejoras de UX
+- Optimización de rendimiento
+- Testing de responsive design en múltiples dispositivos
+- Ajustes finales de diseño
+
+Fase 7 - Documentación y Despliegue (Semanas 13-14):
+- Redacción de documentación técnica
+- Creación de manual de usuario
+- Preparación de presentación final
+- Despliegue en servidor de pruebas
+- Capacitación a usuarios piloto
+
+Herramientas de Desarrollo:
+- Control de versiones: Git y GitHub
+- Editor de código: Visual Studio Code
+- Testing: Django Test Framework
+- Debugging: Django Debug Toolbar
+- Túnel para testing: ngrok
+- Gestión de proyecto: Trello/Notion
+
+CRONOGRAMA:
+
+Duración Total: 14 semanas (3.5 meses)
+
+Semana 1-2: Análisis y Diseño
+- Investigación y benchmarking
+- Definición de requisitos
+- Diseño de base de datos
+- Wireframes y mockups
+- Arquitectura del sistema
+
+Semana 3-5: Backend
+- Setup Django y configuración
+- Modelos de datos
+- Sistema de autenticación
+- Lógica de negocio
+- API endpoints
+
+Semana 6-8: Frontend
+- Templates HTML
+- Estilos CSS personalizados
+- JavaScript e interactividad
+- Formularios y validación
+- Responsive design
+
+Semana 9: Integración de Pagos
+- MercadoPago setup
+- Checkout Pro
+- Reservas temporales
+- Webhooks
+- Testing de pagos
+
+Semana 10: Dashboard
+- Gráficos con Chart.js
+- Métricas de negocio
+- Filtros y exportación
+- Optimización
+
+Semana 11-12: Testing
+- Testing funcional
+- Testing de usabilidad
+- Corrección de bugs
+- Optimización
+- Ajustes finales
+
+Semana 13-14: Documentación
+- Documentación técnica
+- Manual de usuario
+- Presentación
+- Despliegue
+- Capacitación
+
+Hitos Importantes:
+- Semana 2: Diseño completo aprobado
+- Semana 5: Backend funcional
+- Semana 8: Frontend integrado
+- Semana 9: Pagos funcionando
+- Semana 10: Dashboard completo
+- Semana 12: Sistema completo testeado
+- Semana 14: Proyecto finalizado
+
+ARQUITECTURA:
+
+Patrón Arquitectónico: MVC (Model-View-Controller) con Django
+
+Capas del Sistema:
+
+1. Capa de Presentación (Frontend):
+   - Templates HTML5 con Django Template Language
+   - CSS3 con Bootstrap 5.3.3 para diseño responsive
+   - JavaScript vanilla para interactividad
+   - Librerías: Litepicker, Chart.js, AOS, Font Awesome
+
+2. Capa de Lógica de Negocio (Backend):
+   - Django 4.2.6 (Python)
+   - Views: Manejo de peticiones HTTP
+   - Forms: Validación de datos
+   - Services: Lógica de negocio compleja (AvailabilityService)
+   - Middleware: Autenticación y autorización
+
+3. Capa de Datos:
+   - Django ORM para abstracción de base de datos
+   - SQLite para desarrollo
+   - Modelos: Usuario, Barbero, Servicio, Reserva, HorarioTrabajo, TemporaryReservation, PaymentTransaction
+
+4. Capa de Integración:
+   - MercadoPago API para pagos
+   - Webhooks para notificaciones asíncronas
+
+Componentes Principales:
+
+Sistema de Autenticación:
+- Django Authentication System
+- Roles: Cliente, Barbero, Administrador
+- Decoradores @login_required para protección de rutas
+
+Sistema de Reservas:
+- Formulario multi-paso con validación
+- Calendario interactivo (Litepicker)
+- Verificación de disponibilidad en tiempo real
+- Prevención de conflictos de horarios
+
+Sistema de Pagos:
+- Integración con MercadoPago Checkout Pro
+- Reservas temporales (15 minutos de expiración)
+- Manejo de webhooks para confirmación
+- Estados: Success, Pending, Failure
+
+Sistema de Disponibilidad:
+- AvailabilityService: Servicio centralizado
+- Considera reservas confirmadas y temporales
+- Limpieza automática de reservas expiradas
+- Generación de slots horarios
+
+Dashboard de Métricas:
+- Chart.js para visualizaciones
+- Filtros por período (7 días, 30 días, mes, año)
+- Exportación a CSV
+- Gráficos: líneas, barras, donas
+
+Flujo de Datos:
+
+Usuario → Request HTTP → Django URLs → View → Service/Model → Database
+                                    ↓
+                              Template + Context
+                                    ↓
+                              Response HTML → Usuario
+
+Seguridad:
+- CSRF Protection en formularios
+- Validación en backend y frontend
+- Sanitización de inputs
+- Autenticación por sesiones
+- Permisos por rol
+
+STACK TECNOLÓGICO:
+
+Backend:
+- Lenguaje: Python 3.11
+- Framework: Django 4.2.6
+- ORM: Django ORM
+- Base de Datos: SQLite (desarrollo)
+- Autenticación: Django Auth
+
+Frontend:
+- HTML5
+- CSS3
+- JavaScript (ES6+)
+- Bootstrap 5.3.3 (framework CSS)
+- Litepicker (selector de fechas)
+- Chart.js (gráficos)
+- AOS (animaciones)
+- Font Awesome 6.4.0 (iconos)
+
+Integraciones:
+- MercadoPago API 2.2.1 (pagos)
+- MercadoPago Checkout Pro
+
+Herramientas de Desarrollo:
+- Control de versiones: Git + GitHub
+- Editor: Visual Studio Code
+- Servidor de desarrollo: Django development server
+- Túnel para testing: ngrok
+- Gestión de dependencias: pip + requirements.txt
+- Variables de entorno: python-dotenv
+
+Librerías Python:
+- Django==4.2.6
+- Pillow==10.0.1 (manejo de imágenes)
+- mercadopago==2.2.1
+- python-dotenv==1.0.0
+
+Diseño:
+- Paleta de colores: Negro/Dorado/Turquesa
+- Responsive design (mobile-first)
+- Dark mode implementado
+- Gradientes y sombras para profundidad
+
+Hosting y Despliegue (futuro):
+- Servidor: PythonAnywhere / Heroku / Railway
+- Base de datos: PostgreSQL (producción)
+- Archivos estáticos: WhiteNoise / AWS S3
+
+PORTADA:
+
+Nombre del Proyecto: Crono Corte - Sistema de Gestión de Reservas para Barberías
+
+Participantes:
+[AQUÍ DEBES AGREGAR TUS DATOS]
+- Nombre completo del estudiante o equipo
+- Carrera: Ingeniería Informática
+- Universidad/Instituto
+- Profesor guía (si aplica)
+- Fecha: Noviembre 2025
+
+Descripción breve:
+Sistema web integral para la gestión digital de reservas en barberías, con integración de pagos, dashboard de métricas y experiencia de usuario moderna.
+
+================================================================================
+
+INSTRUCCIONES PARA LA IA:
+
+Crea una presentación profesional y visualmente atractiva con la información proporcionada. La presentación debe:
+
+1. Tener un diseño moderno y profesional apropiado para una presentación académica de ingeniería
+2. Usar una paleta de colores elegante (puedes usar negro, dorado y turquesa como colores principales del proyecto)
+3. Incluir las siguientes diapositivas en este orden:
+   - Portada con título y participantes
+   - Contexto (situación actual de las barberías)
+   - Problema (desafíos específicos que se enfrentan)
+   - Solución (cómo Crono Corte resuelve el problema)
+   - Público objetivo (a quién está dirigido)
+   - Objetivo general
+   - Objetivos específicos (puede ser en 2 diapositivas si es necesario)
+   - Metodología (fases del desarrollo)
+   - Cronograma (timeline visual de 14 semanas)
+   - Arquitectura del sistema (diagrama o esquema visual)
+   - Stack tecnológico (organizado por capas: backend, frontend, integraciones)
+   - Diapositiva de cierre o conclusión
+
+4. Usar viñetas, íconos y elementos visuales para hacer la información más digerible
+5. Mantener un equilibrio entre texto e imágenes/gráficos
+6. Usar un lenguaje técnico pero comprensible
+7. Destacar los aspectos innovadores y el valor del proyecto
+
+La presentación debe durar aproximadamente 10-15 minutos cuando se presente.
+
+Genera la presentación ahora.

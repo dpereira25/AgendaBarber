@@ -20,28 +20,33 @@
                     {% if reservas %}
                     <!-- Filtros rápidos -->
                     <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="btn-group" role="group">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="btn-group w-100" role="group" aria-label="Filtros de reservas">
                                 <button type="button" class="btn btn-outline-primary active"
                                     onclick="filtrarReservas('todas')">
-                                    Todas
+                                    <i class="fas fa-list me-1 d-none d-md-inline"></i>Todas
                                 </button>
                                 <button type="button" class="btn btn-outline-success" onclick="filtrarReservas('hoy')">
-                                    Hoy
+                                    <i class="fas fa-calendar-day me-1 d-none d-md-inline"></i>Hoy
                                 </button>
                                 <button type="button" class="btn btn-outline-info" onclick="filtrarReservas('semana')">
-                                    Esta Semana
+                                    <i class="fas fa-calendar-week me-1 d-none d-md-inline"></i>Esta Semana
                                 </button>
                                 <button type="button" class="btn btn-outline-warning"
                                     onclick="filtrarReservas('pendientes')">
-                                    Pendientes
+                                    <i class="fas fa-clock me-1 d-none d-md-inline"></i>Pendientes
                                 </button>
                             </div>
                         </div>
-                        <div class="col-md-6 text-end">
+                        <div class="col-md-6">
                             <div class="input-group">
-                                <input type="date" class="form-control" id="filtroFecha" onchange="filtrarPorFecha()">
-                                <button class="btn btn-outline-secondary" onclick="limpiarFiltros()">
+                                <span class="input-group-text d-md-none">
+                                    <i class="fas fa-calendar"></i>
+                                </span>
+                                <input type="date" class="form-control" id="filtroFecha" onchange="filtrarPorFecha()" 
+                                       placeholder="Filtrar por fecha">
+                                <button class="btn btn-outline-secondary" onclick="limpiarFiltros()" 
+                                        title="Limpiar filtros">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </div>
