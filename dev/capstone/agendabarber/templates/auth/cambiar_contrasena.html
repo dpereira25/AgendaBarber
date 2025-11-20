@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Contraseña Actual -->
+                        <div class="mb-3">
+                            <label for="{{ form.old_password.id_for_label }}" class="form-label">
+                                <i class="fas fa-lock me-1"></i>{{ form.old_password.label }}
+                            </label>
+                            {{ form.old_password }}
+                            {% if form.old_password.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.old_password.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Nueva Contraseña -->
+                        <div class="mb-3">
+                            <label for="{{ form.new_password1.id_for_label }}" class="form-label">
+                                <i class="fas fa-key me-1"></i>{{ form.new_password1.label }}
+                            </label>
+                            {{ form.new_password1 }}
+                            {% if form.new_password1.help_text %}
+                                <div class="form-text">{{ form.new_password1.help_text }}</div>
+                            {% endif %}
+                            {% if form.new_password1.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.new_password1.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Confirmar Nueva Contraseña -->
+                        <div class="mb-3">
+                            <label for="{{ form.new_password2.id_for_label }}" class="form-label">
+                                <i class="fas fa-check-circle me-1"></i>{{ form.new_password2.label }}
+                            </label>
+                            {{ form.new_password2 }}
+                            {% if form.new_password2.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.new_password2.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Requisitos de Contraseña -->
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-info-circle me-1"></i>Requisitos de Contraseña
+                            </h6>
+                            <ul class="mb-0 small">
+                                <li>Mínimo 8 caracteres</li>
+                                <li>Se recomienda usar letras, números y símbolos</li>
+                                <li>No uses contraseñas muy comunes</li>
+                            </ul>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'inicio' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Cambiar Contraseña
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Consejos de Seguridad -->
+            <div class="card mt-3 border-warning">
+                <div class="card-body">
+                    <h6 class="text-warning">
+                        <i class="fas fa-shield-alt me-2"></i>Consejos de Seguridad
+                    </h6>
+                    <ul class="small mb-0">
+                        <li>No compartas tu contraseña con nadie</li>
+                        <li>Usa una contraseña única para cada sitio</li>
+                        <li>Cambia tu contraseña regularmente</li>
+                        <li>No uses información personal obvia</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mostrar/ocultar contraseñas
+document.addEventListener('DOMContentLoaded', function() {
+    // Agregar botones para mostrar/ocultar contraseñas
+    const passwordFields = document.querySelectorAll('input[type="password"]');
+    
+    passwordFields.forEach(field => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'position-relative';
+        
+        field.parentNode.insertBefore(wrapper, field);
+        wrapper.appendChild(field);
+        
+        const toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'btn btn-sm btn-outline-secondary position-absolute';
+        toggleBtn.style.cssText = 'right: 5px; top: 50%; transform: translateY(-50%);';
+        toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+        
+        toggleBtn.addEventListener('click', function() {
+            if (field.type === 'password') {
+                field.type = 'text';
+                toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            } else {
+                field.type = 'password';
+                toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+            }
+        });
+        
+        wrapper.appendChild(toggleBtn);
+    });
+});
+</script>
+{% endblock %}
