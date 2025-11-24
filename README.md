@@ -70,15 +70,6 @@ AgendaBarber/
 └── README.md           # Este archivo
 ```
 
-### Dependencias Principales
-- Django 4.2.6
-- django-leaflet 0.29.0 (mapas)
-- folium 0.15.0 (visualización de mapas)
-- transbank-sdk 5.0.0 (pagos)
-- python-dotenv 1.1.1 (variables de entorno)
-- Pillow (procesamiento de imágenes)
-- numpy (cálculos numéricos)
-
 ### Comandos Útiles
 
 - **Crear superusuario**:
