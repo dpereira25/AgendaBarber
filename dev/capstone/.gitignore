@@ -7,6 +7,10 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# Logs directory
+logs/
+*.log
+
 # Media
 media/
 
@@ -24,8 +28,10 @@ venv.bak
 # Sass
 .sass-cache/
 
-# Markdown files (documentation)
+# Markdown files (documentation) - except README and DOCUMENTACION
 *.md
+!README.md
+!DOCUMENTACION.md
 
 # Kiro specs and configuration
 .kiro/

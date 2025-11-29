@@ -5,7 +5,7 @@
 <div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card shadow border-danger">
+            <div class="card shadow border-danger payment-failure-card">
                 <div class="card-header bg-danger text-white text-center">
                     <h3 class="mb-0">
                         <i class="fas fa-times-circle fa-2x mb-2"></i><br>
@@ -13,7 +13,7 @@
                     </h3>
                 </div>
                 <div class="card-body text-center">
-                    <div class="alert alert-danger border-0 bg-light">
+                    <div class="alert alert-danger border-0 danger-alert">
                         <h4 class="text-danger mb-3">
                             <i class="fas fa-exclamation-triangle me-2"></i>
                             No se pudo procesar el pago
@@ -22,7 +22,7 @@
                     </div>
 
                     <!-- Razones comunes del fallo -->
-                    <div class="card bg-light mt-4">
+                    <div class="card detail-card mt-4">
                         <div class="card-body">
                             <h6 class="card-title text-warning">
                                 <i class="fas fa-info-circle me-1"></i>Posibles Causas
@@ -55,7 +55,7 @@
                     {% endif %}
 
                     <!-- Opciones de retry -->
-                    <div class="card bg-light mt-4">
+                    <div class="card detail-card mt-4">
                         <div class="card-body">
                             <h6 class="card-title text-primary">
                                 <i class="fas fa-redo me-1"></i>¿Qué puedes hacer?
@@ -148,6 +148,58 @@ document.addEventListener('DOMContentLoaded', function() {
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-5px); }
     75% { transform: translateX(5px); }
+}
+
+/* Estilos para modo claro */
+.payment-failure-card {
+    background: #ffffff;
+}
+
+.danger-alert {
+    background-color: #f8d7da !important;
+    color: #721c24;
+}
+
+.detail-card {
+    background-color: #f8f9fa;
+}
+
+/* Estilos para modo oscuro */
+body.dark-mode .payment-failure-card {
+    background: #2d2d2d;
+    color: #e9ecef;
+}
+
+body.dark-mode .danger-alert {
+    background: linear-gradient(135deg, #4d1a1a 0%, #5f2d2d 100%) !important;
+    color: #ff6b6b;
+    border-color: #dc3545;
+}
+
+body.dark-mode .detail-card {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    color: #e9ecef;
+}
+
+body.dark-mode .detail-card .card-title {
+    color: #FFD700 !important;
+}
+
+body.dark-mode .detail-card hr {
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+body.dark-mode .alert-info {
+    background: linear-gradient(135deg, #1a3a4d 0%, #2d4f5f 100%);
+    color: #a8d5e2;
+    border-color: #0dcaf0;
+}
+
+body.dark-mode .alert-warning {
+    background: linear-gradient(135deg, #4d3a1a 0%, #5f4a2d 100%);
+    color: #FFD700;
+    border-color: #FFD700;
 }
 </style>
 {% endblock %}

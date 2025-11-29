@@ -14,6 +14,7 @@ import logging
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from .forms import CustomUserCreationForm
+from .decorators import barbero_required, ajax_login_required
 
 logger = logging.getLogger(__name__)
 
@@ -155,10 +156,9 @@ def perfil_cliente(request):
     
     return render(request, 'perfil_cliente.html', context)
 
+@login_required
 def mis_reservas_cliente(request):
     """Vista para que los clientes vean sus reservas"""
-    if not request.user.is_authenticated:
-        return redirect('login')
     
     reservas = Reserva.objects.filter(
         cliente=request.user
@@ -181,17 +181,11 @@ def mis_reservas_cliente(request):
     
     return render(request, 'mis_reservas_cliente.html', context)
 
+@barbero_required
 def agenda_barbero(request):
     """Vista para que los barberos vean su agenda"""
-    if not request.user.is_authenticated:
-        return redirect('login')
-    
-    # Verificar si el usuario es barbero
-    try:
-        barbero = Barbero.objects.get(usuario=request.user)
-    except Barbero.DoesNotExist:
-        messages.error(request, 'No tienes permisos de barbero. Contacta al administrador.')
-        return redirect('inicio')
+    # El decorador ya verifica autenticación y permisos
+    barbero = Barbero.objects.get(usuario=request.user)
     
     # Obtener reservas del barbero - solo confirmadas y pagadas
     reservas = Reserva.objects.filter(
@@ -350,9 +344,18 @@ def cancelar_reserva(request):
         tiempo_limite = timezone.now() + timedelta(hours=2)
         
         if reserva.inicio <= tiempo_limite:
+            # Calcular tiempo restante para mensaje más informativo
+            tiempo_restante = reserva.inicio - timezone.now()
+            horas_restantes = tiempo_restante.total_seconds() / 3600
+            
+            if horas_restantes < 0:
+                mensaje = 'No se puede cancelar una reserva que ya pasó'
+            else:
+                mensaje = f'No se puede cancelar con menos de 2 horas de anticipación. Faltan {horas_restantes:.1f} horas para la cita'
+            
             return JsonResponse({
                 'success': False,
-                'message': 'No se puede cancelar con menos de 2 horas de anticipaciÃ³n'
+                'message': mensaje
             })
         
         # Cancelar la reserva
@@ -1297,3 +1300,22 @@ def contacto(request):
         }
     }
     return render(request, 'contacto.html', context)
+
+
+# ----------------------------------------------------------------------
+# VISTAS DE ERROR PERSONALIZADAS
+# ----------------------------------------------------------------------
+
+def custom_404(request, exception=None):
+    """Vista personalizada para error 404 - Página no encontrada"""
+    return render(request, '404.html', status=404)
+
+
+def custom_500(request):
+    """Vista personalizada para error 500 - Error del servidor"""
+    return render(request, '500.html', status=500)
+
+
+def custom_403(request, exception=None):
+    """Vista personalizada para error 403 - Acceso denegado"""
+    return render(request, '403.html', status=403)

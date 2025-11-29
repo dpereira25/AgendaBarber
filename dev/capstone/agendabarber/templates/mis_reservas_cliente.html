@@ -58,13 +58,13 @@
                                         {% endif %}
                                     </div>
 
-                                    {% if reserva.estado == 'Pendiente' %}
+                                    {% if reserva.estado == 'Pendiente' or reserva.estado == 'Confirmada' %}
                                     {% now "Y-m-d H:i" as current_datetime %}
                                     {% if reserva.inicio|date:"Y-m-d H:i" > current_datetime %}
                                     <div class="d-grid">
                                         <button class="btn btn-outline-danger btn-sm"
                                             onclick="cancelarReserva('{{ reserva.id }}')">
-                                            <i class="fas fa-times me-1"></i>Cancelar
+                                            <i class="fas fa-times me-1"></i>Cancelar Reserva
                                         </button>
                                     </div>
                                     {% endif %}

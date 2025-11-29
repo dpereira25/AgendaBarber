@@ -5,7 +5,7 @@
 <div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card shadow border-warning">
+            <div class="card shadow border-warning payment-pending-card">
                 <div class="card-header bg-warning text-dark text-center">
                     <h3 class="mb-0">
                         <i class="fas fa-hourglass-half fa-2x mb-2"></i><br>
@@ -13,7 +13,7 @@
                     </h3>
                 </div>
                 <div class="card-body text-center">
-                    <div class="alert alert-warning border-0 bg-light">
+                    <div class="alert alert-warning border-0 warning-alert">
                         <h4 class="text-warning mb-3">
                             <i class="fas fa-clock me-2"></i>
                             Tu pago está siendo procesado
@@ -22,7 +22,7 @@
                     </div>
 
                     <!-- Status indicator -->
-                    <div class="card bg-light mt-4">
+                    <div class="card detail-card mt-4">
                         <div class="card-body">
                             <h6 class="card-title text-info">
                                 <i class="fas fa-info-circle me-1"></i>Estado Actual
@@ -50,7 +50,7 @@
                     <!-- Detalles de la reserva temporal -->
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <div class="card bg-light">
+                            <div class="card detail-card">
                                 <div class="card-body">
                                     <h6 class="card-title text-primary">
                                         <i class="fas fa-calendar-alt me-1"></i>Detalles de la Reserva
@@ -78,7 +78,7 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="card bg-light">
+                            <div class="card detail-card">
                                 <div class="card-body">
                                     <h6 class="card-title text-warning">
                                         <i class="fas fa-shield-alt me-1"></i>Reserva Protegida
@@ -111,7 +111,7 @@
                     {% endif %}
 
                     <!-- Información sobre pagos pendientes -->
-                    <div class="card bg-light mt-4">
+                    <div class="card detail-card mt-4">
                         <div class="card-body">
                             <h6 class="card-title text-info">
                                 <i class="fas fa-question-circle me-1"></i>¿Por qué está pendiente mi pago?
@@ -171,7 +171,7 @@
                     </div>
 
                     <!-- Información de contacto -->
-                    <div class="alert alert-light mt-4 border">
+                    <div class="alert info-alert mt-4 border">
                         <h6><i class="fas fa-headset me-2"></i>¿Necesitas Ayuda?</h6>
                         <p class="mb-0">Si tu pago sigue pendiente después de 24 horas, contáctanos.</p>
                     </div>
@@ -279,4 +279,79 @@ window.addEventListener('beforeunload', function() {
     if (countdownInterval) clearInterval(countdownInterval);
 });
 </script>
+
+<style>
+/* Estilos para modo claro */
+.payment-pending-card {
+    background: #ffffff;
+}
+
+.warning-alert {
+    background-color: #fff3cd !important;
+    color: #856404;
+}
+
+.detail-card {
+    background-color: #f8f9fa;
+}
+
+.info-alert {
+    background-color: #f8f9fa;
+    color: #212529;
+}
+
+/* Estilos para modo oscuro */
+body.dark-mode .payment-pending-card {
+    background: #2d2d2d;
+    color: #e9ecef;
+}
+
+body.dark-mode .warning-alert {
+    background: linear-gradient(135deg, #4d3a1a 0%, #5f4a2d 100%) !important;
+    color: #FFD700;
+    border-color: #FFD700;
+}
+
+body.dark-mode .detail-card {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    color: #e9ecef;
+}
+
+body.dark-mode .detail-card .card-title {
+    color: #FFD700 !important;
+}
+
+body.dark-mode .detail-card hr {
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+body.dark-mode .info-alert {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    color: #e9ecef;
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+body.dark-mode .badge.bg-warning {
+    background: linear-gradient(135deg, #FFD700 0%, #D4AF37 100%) !important;
+    color: #000;
+}
+
+body.dark-mode code {
+    background-color: #1a1a1a;
+    color: #FFD700;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+body.dark-mode .progress {
+    background-color: #1a1a1a;
+}
+
+body.dark-mode .alert-info {
+    background: linear-gradient(135deg, #1a3a4d 0%, #2d4f5f 100%);
+    color: #a8d5e2;
+    border-color: #0dcaf0;
+}
+</style>
 {% endblock %}

@@ -23,3 +23,8 @@ urlpatterns = [
     path('auth/', include('django.contrib.auth.urls')),
     path('panel/', include('panel.urls')),
 ]
+
+# Handlers de error personalizados (funcionan en DEBUG=True y DEBUG=False)
+handler404 = 'agendabarber.views.custom_404'
+handler500 = 'agendabarber.views.custom_500'
+handler403 = 'agendabarber.views.custom_403'

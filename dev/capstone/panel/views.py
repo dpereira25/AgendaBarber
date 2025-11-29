@@ -9,33 +9,11 @@ import json
 import csv
 
 from agendabarber.models import Reserva, Servicio, Barbero
+from agendabarber.decorators import admin_or_barbero_required
 from .analytics_service import AnalyticsService
 
-def admin_required(view_func):
-    """
-    Decorador para verificar permisos administrativos
-    """
-    def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return redirect('login')
-        
-        # Verificar si es superuser o barbero
-        is_admin = request.user.is_superuser
-        is_barbero = False
-        
-        try:
-            Barbero.objects.get(usuario=request.user)
-            is_barbero = True
-        except Barbero.DoesNotExist:
-            pass
-        
-        if not (is_admin or is_barbero):
-            messages.error(request, 'No tienes permisos para acceder al panel administrativo.')
-            return redirect('inicio')
-        
-        return view_func(request, *args, **kwargs)
-    
-    return wrapper
+# Alias para mantener compatibilidad
+admin_required = admin_or_barbero_required
 
 @admin_required
 def dashboard(request):

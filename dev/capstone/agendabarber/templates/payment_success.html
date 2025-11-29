@@ -5,7 +5,7 @@
 <div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card shadow border-success">
+            <div class="card shadow border-success payment-success-card">
                 <div class="card-header bg-success text-white text-center">
                     <h3 class="mb-0">
                         <i class="fas fa-check-circle fa-2x mb-2"></i><br>
@@ -13,25 +13,25 @@
                     </h3>
                 </div>
                 <div class="card-body text-center">
-                    <div class="alert alert-success border-0 bg-light">
+                    <div class="alert alert-success border-0 success-alert">
                         <h4 class="text-success mb-3">
                             <i class="fas fa-calendar-check me-2"></i>
                             Tu reserva ha sido confirmada
                         </h4>
-                        <p class="mb-0">El pago se procesó correctamente y tu reserva está confirmada.</p>
+                        <p class="mb-0 alert-text">El pago se procesó correctamente y tu reserva está confirmada.</p>
                     </div>
 
                     {% if reserva %}
                     <!-- Detalles de la reserva -->
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <div class="card bg-light">
+                            <div class="card detail-card">
                                 <div class="card-body">
                                     <h6 class="card-title text-primary">
                                         <i class="fas fa-info-circle me-1"></i>Detalles de la Reserva
                                     </h6>
                                     <hr>
-                                    <div class="text-start">
+                                    <div class="text-start detail-text">
                                         <p class="mb-2">
                                             <strong><i class="fas fa-user-tie me-2 text-primary"></i>Barbero:</strong>
                                             {{ reserva.barbero.nombre }}
@@ -57,13 +57,13 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="card bg-light">
+                            <div class="card detail-card">
                                 <div class="card-body">
                                     <h6 class="card-title text-success">
                                         <i class="fas fa-credit-card me-1"></i>Información del Pago
                                     </h6>
                                     <hr>
-                                    <div class="text-start">
+                                    <div class="text-start detail-text">
                                         <p class="mb-2">
                                             <strong><i class="fas fa-dollar-sign me-2 text-success"></i>Monto:</strong>
                                             ${{ reserva.servicio.precio|floatformat:0 }}
@@ -89,7 +89,7 @@
                     </div>
 
                     <!-- Información adicional -->
-                    <div class="alert alert-info mt-4">
+                    <div class="alert alert-info mt-4 info-alert">
                         <h6><i class="fas fa-info-circle me-2"></i>Información Importante</h6>
                         <ul class="list-unstyled mb-0 text-start">
                             <li><i class="fas fa-envelope me-2"></i>Recibirás un email de confirmación en breve</li>
@@ -138,6 +138,88 @@ document.addEventListener('DOMContentLoaded', function() {
     0% { transform: scale(1); }
     50% { transform: scale(1.1); }
     100% { transform: scale(1); }
+}
+
+/* Estilos para modo claro */
+.payment-success-card {
+    background: #ffffff;
+}
+
+.success-alert {
+    background-color: #d1e7dd !important;
+}
+
+.alert-text {
+    color: #0f5132;
+}
+
+.detail-card {
+    background-color: #f8f9fa;
+}
+
+.detail-text {
+    color: #212529;
+}
+
+.info-alert {
+    background-color: #cff4fc;
+    color: #055160;
+    border-color: #b6effb;
+}
+
+/* Estilos para modo oscuro */
+body.dark-mode .payment-success-card {
+    background: #2d2d2d;
+    color: #e9ecef;
+}
+
+body.dark-mode .success-alert {
+    background: linear-gradient(135deg, #1a4d2e 0%, #2d5f3f 100%) !important;
+    color: #7ed321;
+    border-color: #7ed321;
+}
+
+body.dark-mode .alert-text {
+    color: #a8e6a1;
+}
+
+body.dark-mode .detail-card {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+body.dark-mode .detail-text {
+    color: #e9ecef;
+}
+
+body.dark-mode .detail-card .card-title {
+    color: #FFD700 !important;
+}
+
+body.dark-mode .detail-card hr {
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+body.dark-mode .info-alert {
+    background: linear-gradient(135deg, #1a3a4d 0%, #2d4f5f 100%);
+    color: #a8d5e2;
+    border-color: #0dcaf0;
+}
+
+body.dark-mode .info-alert h6 {
+    color: #0dcaf0;
+}
+
+body.dark-mode .badge.bg-success {
+    background: linear-gradient(135deg, #7ed321 0%, #5fa319 100%) !important;
+    color: #000;
+}
+
+body.dark-mode code {
+    background-color: #1a1a1a;
+    color: #FFD700;
+    padding: 2px 6px;
+    border-radius: 4px;
 }
 </style>
 {% endblock %}

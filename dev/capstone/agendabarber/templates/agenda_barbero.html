@@ -126,16 +126,24 @@
                                                         <i class="fas fa-info-circle"></i>
                                                     </button>
                                                     {% if reserva.estado == 'Pendiente' %}
-                                                        <button class="btn btn-success btn-sm" onclick="confirmarReserva('{{ reserva.id }}')">
+                                                        <button class="btn btn-success btn-sm" onclick="confirmarReserva('{{ reserva.id }}')" title="Confirmar reserva">
                                                             <i class="fas fa-check"></i>
                                                         </button>
-                                                        <button class="btn btn-danger btn-sm" onclick="cancelarReserva('{{ reserva.id }}')">
+                                                        <button class="btn btn-danger btn-sm" onclick="cancelarReserva('{{ reserva.id }}')" title="Cancelar reserva">
                                                             <i class="fas fa-times"></i>
                                                         </button>
-                                                    {% elif reserva.estado == 'Confirmada' and reserva.inicio|date:'Y-m-d' <= today %}
-                                                        <button class="btn btn-info btn-sm" onclick="completarReserva('{{ reserva.id }}')">
-                                                            <i class="fas fa-check-double"></i>
-                                                        </button>
+                                                    {% elif reserva.estado == 'Confirmada' %}
+                                                        {% now "Y-m-d H:i" as current_datetime %}
+                                                        {% if reserva.inicio|date:"Y-m-d H:i" > current_datetime %}
+                                                            <button class="btn btn-danger btn-sm" onclick="cancelarReserva('{{ reserva.id }}')" title="Cancelar reserva">
+                                                                <i class="fas fa-times"></i>
+                                                            </button>
+                                                        {% endif %}
+                                                        {% if reserva.inicio|date:'Y-m-d' <= today %}
+                                                            <button class="btn btn-info btn-sm" onclick="completarReserva('{{ reserva.id }}')" title="Marcar como completada">
+                                                                <i class="fas fa-check-double"></i>
+                                                            </button>
+                                                        {% endif %}
                                                     {% endif %}
                                                 </div>
                                         </div>

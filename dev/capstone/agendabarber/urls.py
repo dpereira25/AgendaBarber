@@ -62,3 +62,10 @@ urlpatterns = [
 # Configuración de archivos estáticos y media (fotos de barberos/servicios) en entorno de desarrollo
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    
+    # Rutas de prueba para páginas de error (Solo para desarrollo)
+    urlpatterns += [
+        path('test-404/', views.custom_404, name='test_404'),
+        path('test-500/', views.custom_500, name='test_500'),
+        path('test-403/', views.custom_403, name='test_403'),
+    ]
