@@ -25,8 +25,10 @@ def dashboard(request):
     period = request.GET.get('period', 'this_month')
     start_date, end_date = get_date_range(period)
     
-    # Determinar si el usuario es barbero específico
+    # Determinar si el usuario es barbero específico o administrador
     barbero_id = None
+    is_admin = request.user.is_superuser
+    
     try:
         barbero = Barbero.objects.get(usuario=request.user)
         barbero_id = barbero.id
@@ -62,6 +64,29 @@ def dashboard(request):
     
     top_servicios = list(top_servicios_query)
     
+    # Si es administrador, obtener métricas individuales por barbero
+    barberos_metrics = []
+    if is_admin and not barbero_id:
+        barberos = Barbero.objects.all().order_by('nombre')
+        for barb in barberos:
+            barb_revenue = AnalyticsService.get_revenue_metrics(
+                start_date=start_date,
+                end_date=end_date,
+                barbero_id=barb.id
+            )
+            barb_stats = AnalyticsService.get_booking_statistics(
+                start_date=start_date,
+                end_date=end_date,
+                barbero_id=barb.id
+            )
+            barberos_metrics.append({
+                'barbero': barb,
+                'ingresos': barb_revenue['total_revenue'],
+                'reservas': barb_revenue['total_bookings'],
+                'promedio': barb_revenue['avg_booking_value'],
+                'tasa_completacion': barb_stats['completion_rate']
+            })
+    
     # Datos para gráficos (se cargarán vía AJAX)
     context = {
         # Métricas principales
@@ -80,7 +105,11 @@ def dashboard(request):
         
         # Info del usuario
         'is_barbero': barbero_id is not None,
+        'is_admin': is_admin,
         'barbero_id': barbero_id,
+        
+        # Métricas por barbero (solo para admin)
+        'barberos_metrics': barberos_metrics,
     }
     
     return render(request, 'panel/dashboard.html', context)

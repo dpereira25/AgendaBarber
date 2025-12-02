@@ -7,14 +7,22 @@
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
-            <h1 class="text-center mb-2">Panel Administrativo 💈</h1>
-            {% if not is_barbero %}
-            <div class="badge bg-primary">
-                <i class="fas fa-crown me-1"></i>Vista Global - Todos los Barberos
+            <h1 class="mb-2">
+                <i class="fas fa-chart-line me-2"></i>Panel de Insights
+            </h1>
+            {% if is_admin and not is_barbero %}
+            <div class="d-flex gap-2 align-items-center">
+                <div class="badge bg-primary">
+                    <i class="fas fa-crown me-1"></i>Administrador
+                </div>
+                <span class="text-muted">Vista global de todos los barberos</span>
             </div>
-            {% else %}
-            <div class="badge bg-info">
-                <i class="fas fa-user me-1"></i>Vista Personal
+            {% elif is_barbero %}
+            <div class="d-flex gap-2 align-items-center">
+                <div class="badge bg-info">
+                    <i class="fas fa-user me-1"></i>Barbero
+                </div>
+                <span class="text-muted">Vista personal de tus métricas</span>
             </div>
             {% endif %}
         </div>
@@ -135,13 +143,98 @@
         </div>
     </div>
 
-    <!-- Rendimiento de barberos (solo si no es barbero específico) -->
+    <!-- Métricas individuales por barbero (solo para administradores) -->
+    {% if is_admin and not is_barbero %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>Insights por Barbero
+                    </h5>
+                    <span class="badge bg-primary">Vista Administrativa</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for item in barberos_metrics %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card border-start border-4 border-primary h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="card-title mb-0">
+                                            <i class="fas fa-user-tie me-2"></i>{{ item.barbero.nombre }}
+                                        </h5>
+                                        <span class="badge bg-secondary">{{ item.barbero.experiencia }} años exp.</span>
+                                    </div>
+                                    
+                                    <div class="row text-center">
+                                        <div class="col-6 mb-3">
+                                            <div class="p-3 bg-light rounded">
+                                                <h6 class="text-muted small mb-1">Ingresos</h6>
+                                                <h4 class="text-dark mb-0">${{ item.ingresos|floatformat:0 }}</h4>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 mb-3">
+                                            <div class="p-3 bg-light rounded">
+                                                <h6 class="text-muted small mb-1">Reservas</h6>
+                                                <h4 class="text-dark mb-0">{{ item.reservas }}</h4>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="p-3 bg-light rounded">
+                                                <h6 class="text-muted small mb-1">Promedio</h6>
+                                                <h4 class="text-dark mb-0">${{ item.promedio|floatformat:0 }}</h4>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="p-3 bg-light rounded">
+                                                <h6 class="text-muted small mb-1">Completación</h6>
+                                                <h4 class="text-dark mb-0">{{ item.tasa_completacion|floatformat:1 }}%</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if item.ingresos > 0 %}
+                                    <div class="mt-3">
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-primary" 
+                                                 role="progressbar" 
+                                                 style="width: {{ item.tasa_completacion }}%;" 
+                                                 aria-valuenow="{{ item.tasa_completacion }}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">Tasa de completación</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle me-2"></i>
+                                No hay barberos registrados en el sistema.
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Rendimiento de barberos (gráfico comparativo - solo si no es barbero específico) -->
     {% if not is_barbero %}
     <div class="row mb-5">
         <div class="col-12">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white">
-                    <h5 class="mb-0">Rendimiento de Barberos</h5>
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Comparativa de Rendimiento
+                    </h5>
                 </div>
                 <div class="card-body">
                     <canvas id="barberChart" height="100"></canvas>
@@ -361,9 +454,10 @@ function initializeCharts() {
 }
 
 function setupEventListeners() {
-    // Filtro de período
+    // Filtro de período - recargar página para actualizar todas las métricas
     document.getElementById('periodFilter').addEventListener('change', function() {
         const newPeriod = this.value;
+        showLoading();
         window.location.href = `?period=${newPeriod}`;
     });
 
@@ -401,35 +495,73 @@ function setupEventListeners() {
 function loadAllData() {
     showLoading();
     
-    const period = document.getElementById('periodFilter').value;
+    const period = document.getElementById('periodFilter').value || currentPeriod;
+    console.log('Loading data for period:', period);
+    
+    // Array para almacenar todas las promesas
+    const promises = [];
     
     // Cargar datos de ingresos
-    fetch(`/panel/api/revenue-data/?period=${period}`)
-        .then(response => response.json())
-        .then(data => {
-            updateRevenueChart(data);
-        })
-        .catch(error => console.error('Error loading revenue data:', error));
+    promises.push(
+        fetch(`/panel/api/revenue-data/?period=${period}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Revenue data request failed');
+                return response.json();
+            })
+            .then(data => {
+                console.log('Revenue data loaded:', data);
+                updateRevenueChart(data);
+            })
+            .catch(error => {
+                console.error('Error loading revenue data:', error);
+            })
+    );
 
     // Cargar analytics de reservas
-    fetch(`/panel/api/booking-analytics/?period=${period}`)
-        .then(response => response.json())
-        .then(data => {
-            updateBookingCharts(data);
-        })
-        .catch(error => console.error('Error loading booking analytics:', error));
+    promises.push(
+        fetch(`/panel/api/booking-analytics/?period=${period}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Booking analytics request failed');
+                return response.json();
+            })
+            .then(data => {
+                console.log('Booking analytics loaded:', data);
+                updateBookingCharts(data);
+            })
+            .catch(error => {
+                console.error('Error loading booking analytics:', error);
+            })
+    );
 
     // Cargar rendimiento de barberos (solo si no es barbero específico)
     if (!isBarbero) {
-        fetch(`/panel/api/barber-performance/?period=${period}`)
-            .then(response => response.json())
-            .then(data => {
-                updateBarberChart(data);
-            })
-            .catch(error => console.error('Error loading barber performance:', error));
+        promises.push(
+            fetch(`/panel/api/barber-performance/?period=${period}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Barber performance request failed');
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Barber performance loaded:', data);
+                    updateBarberChart(data);
+                })
+                .catch(error => {
+                    console.error('Error loading barber performance:', error);
+                })
+        );
     }
 
-    hideLoading();
+    // Esperar a que todas las peticiones terminen
+    Promise.all(promises)
+        .then(() => {
+            console.log('All data loaded successfully');
+        })
+        .catch(error => {
+            console.error('Error in Promise.all:', error);
+        })
+        .finally(() => {
+            hideLoading();
+        });
 }
 
 function updateRevenueChart(data) {

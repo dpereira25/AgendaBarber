@@ -103,7 +103,7 @@ def logout_usuario(request):
     Vista personalizada para logout que redirije directamente
     """
     logout(request)
-    messages.success(request, 'Â¡Has cerrado sesiÃ³n exitosamente!')
+    messages.success(request, '¡Has cerrado sesión exitosamente!')
     return redirect('inicio')
 
 
@@ -389,7 +389,20 @@ def cancelar_reserva(request):
 
 @login_required
 def crearReserva(request):
-    # Obtener servicio preseleccionado si viene de la pÃ¡gina de inicio
+    # Verificar que el usuario no sea administrador ni barbero
+    # Solo los clientes pueden hacer reservas
+    if request.user.is_superuser:
+        messages.warning(request, 'Los administradores no pueden hacer reservas. Esta función es solo para clientes.')
+        return redirect('dashboard')
+    
+    try:
+        barbero = Barbero.objects.get(usuario=request.user)
+        messages.warning(request, 'Los barberos no pueden hacer reservas. Esta función es solo para clientes.')
+        return redirect('agenda_barbero')
+    except Barbero.DoesNotExist:
+        pass  # El usuario es un cliente, puede continuar
+    
+    # Obtener servicio preseleccionado si viene de la página de inicio
     servicio_id = request.GET.get('servicio_id')
     initial_data = {}
     if servicio_id:

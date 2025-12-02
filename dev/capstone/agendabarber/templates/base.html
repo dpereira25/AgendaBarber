@@ -48,7 +48,15 @@
                 <ul class="navbar-nav ms-auto">
     
                     <li class="nav-item"><a class="nav-link" href="{% url 'inicio' %}">Inicio</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'crear_reserva' %}">Reservar</a></li>
+                    
+                    {% comment %}
+                    Ocultar botón "Reservar" para administradores y barberos
+                    Solo clientes pueden hacer reservas
+                    {% endcomment %}
+                    {% if not user.is_superuser and not es_barbero %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'crear_reserva' %}">Reservar</a></li>
+                    {% endif %}
+                    
                     <li class="nav-item"><a class="nav-link" href="{% url 'catalogo' %}">Catálogo</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'contacto' %}">Contacto</a></li>
                     
@@ -88,6 +96,7 @@
                                     <li><a class="dropdown-item" href="{% url 'dashboard' %}">
                                         <i class="fas fa-chart-line me-2"></i>Panel de Insights
                                     </a></li>
+                                    <li><hr class="dropdown-divider"></li>
                                 {% endif %}
                                 
                                 {% if user.is_staff %}
