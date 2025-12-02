@@ -49,17 +49,17 @@ def dashboard(request):
     )
     
     # Top 5 servicios más populares (corregido)
+    # Construir el filtro dinámicamente
+    reserva_filter = Q(reserva__fin__lt=timezone.now())  # Solo reservas completadas
+    if start_date:
+        reserva_filter &= Q(reserva__inicio__date__gte=start_date)
+    if end_date:
+        reserva_filter &= Q(reserva__inicio__date__lte=end_date)
+    if barbero_id:
+        reserva_filter &= Q(reserva__barbero_id=barbero_id)
+    
     top_servicios_query = Servicio.objects.annotate(
-        total=Count('reserva', filter=Q(
-            reserva__inicio__date__gte=start_date,
-            reserva__inicio__date__lte=end_date,
-            reserva__barbero_id=barbero_id  # Incluir filtro de barbero en la anotación
-        ) if start_date and end_date and barbero_id else Q(
-            reserva__inicio__date__gte=start_date,
-            reserva__inicio__date__lte=end_date
-        ) if start_date and end_date else Q(
-            reserva__barbero_id=barbero_id
-        ) if barbero_id else Q())
+        total=Count('reserva', filter=reserva_filter)
     ).order_by('-total')[:5]
     
     top_servicios = list(top_servicios_query)
@@ -133,11 +133,11 @@ def revenue_data_api(request):
     # Obtener datos de tendencia mensual
     if period in ['this_year', 'last_year']:
         year = start_date.year if start_date else timezone.now().year
-        monthly_data = AnalyticsService.get_monthly_revenue_trend(year)
+        monthly_data = AnalyticsService.get_monthly_revenue_trend(year, barbero_id=barbero_id)
         
         return JsonResponse({
             'labels': [item['month'] for item in monthly_data],
-            'data': [item['revenue'] for item in monthly_data],
+            'data': [float(item['revenue']) for item in monthly_data],
             'type': 'monthly'
         })
     
@@ -146,7 +146,8 @@ def revenue_data_api(request):
     current_date = start_date
     
     while current_date <= end_date:
-        revenue = Reserva.objects.ingresos_reales().filter(
+        # Usar completadas() en lugar de ingresos_reales()
+        revenue = Reserva.objects.completadas().filter(
             inicio__date=current_date
         )
         
@@ -157,7 +158,7 @@ def revenue_data_api(request):
         
         daily_data.append({
             'date': current_date.strftime('%Y-%m-%d'),
-            'revenue': daily_revenue
+            'revenue': float(daily_revenue)
         })
         
         current_date += timedelta(days=1)
@@ -191,14 +192,22 @@ def booking_analytics_api(request):
     
     peak_hours = AnalyticsService.get_peak_hours_analysis(
         start_date=start_date,
-        end_date=end_date
+        end_date=end_date,
+        barbero_id=barbero_id
     )
     
     return JsonResponse({
         'status_distribution': booking_stats['status_distribution'],
         'weekday_distribution': booking_stats['weekday_distribution'],
         'peak_hours': peak_hours,
-        'completion_rate': booking_stats['completion_rate']
+        'completion_rate': float(booking_stats['completion_rate']),
+        'debug': {
+            'period': period,
+            'start_date': start_date.isoformat() if start_date else None,
+            'end_date': end_date.isoformat() if end_date else None,
+            'barbero_id': barbero_id,
+            'total_bookings': booking_stats['total_bookings']
+        }
     })
 
 @admin_required
@@ -214,8 +223,18 @@ def barber_performance_api(request):
         end_date=end_date
     )
     
+    # Convertir Decimal a float para JSON
+    for barber in performance_data:
+        barber['revenue'] = float(barber['revenue'])
+    
     return JsonResponse({
-        'barber_performance': performance_data
+        'barber_performance': performance_data,
+        'debug': {
+            'period': period,
+            'start_date': start_date.isoformat() if start_date else None,
+            'end_date': end_date.isoformat() if end_date else None,
+            'total_barbers': len(performance_data)
+        }
     })
 
 @admin_required
@@ -231,8 +250,19 @@ def service_analytics_api(request):
         end_date=end_date
     )
     
+    # Convertir Decimal a float para JSON
+    for service in service_data:
+        if service['total_revenue']:
+            service['total_revenue'] = float(service['total_revenue'])
+    
     return JsonResponse({
-        'service_popularity': service_data
+        'service_popularity': service_data,
+        'debug': {
+            'period': period,
+            'start_date': start_date.isoformat() if start_date else None,
+            'end_date': end_date.isoformat() if end_date else None,
+            'total_services': len(service_data)
+        }
     })
 
 @admin_required

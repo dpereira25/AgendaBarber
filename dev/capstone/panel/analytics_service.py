@@ -14,8 +14,9 @@ class AnalyticsService:
         """
         Calcula métricas de ingresos para un período específico
         """
-        # Filtro base: solo reservas que ya generaron ingresos (completadas por tiempo)
-        queryset = Reserva.objects.ingresos_reales()
+        # Filtro base: solo reservas completadas (por tiempo)
+        # Usamos completadas() en lugar de ingresos_reales() para incluir todas las reservas completadas
+        queryset = Reserva.objects.completadas()
         
         # Aplicar filtros de fecha si se proporcionan
         if start_date:
@@ -110,8 +111,16 @@ class AnalyticsService:
             
             # Calcular métricas basadas en tiempo
             total_bookings = queryset.count()
-            completed_bookings = Reserva.objects.completadas().filter(barbero=barbero).count()
-            revenue = Reserva.objects.ingresos_reales().filter(barbero=barbero).aggregate(
+            
+            # Filtrar reservas completadas con los mismos filtros de fecha
+            completed_queryset = Reserva.objects.completadas().filter(barbero=barbero)
+            if start_date:
+                completed_queryset = completed_queryset.filter(inicio__date__gte=start_date)
+            if end_date:
+                completed_queryset = completed_queryset.filter(inicio__date__lte=end_date)
+            
+            completed_bookings = completed_queryset.count()
+            revenue = completed_queryset.aggregate(
                 total=Sum('servicio__precio')
             )['total'] or 0
             
@@ -160,7 +169,7 @@ class AnalyticsService:
         return list(service_bookings)
     
     @staticmethod
-    def get_peak_hours_analysis(start_date=None, end_date=None):
+    def get_peak_hours_analysis(start_date=None, end_date=None, barbero_id=None):
         """
         Analiza las horas pico de reservas
         """
@@ -172,6 +181,8 @@ class AnalyticsService:
             queryset = queryset.filter(inicio__date__gte=start_date)
         if end_date:
             queryset = queryset.filter(inicio__date__lte=end_date)
+        if barbero_id:
+            queryset = queryset.filter(barbero_id=barbero_id)
         
         # Agrupar por hora
         hours_data = {}
@@ -182,7 +193,7 @@ class AnalyticsService:
         return hours_data
     
     @staticmethod
-    def get_monthly_revenue_trend(year=None):
+    def get_monthly_revenue_trend(year=None, barbero_id=None):
         """
         Obtiene tendencia de ingresos mensuales
         """
@@ -197,10 +208,16 @@ class AnalyticsService:
         
         monthly_data = []
         for month in range(1, 13):
-            revenue = Reserva.objects.ingresos_reales().filter(
+            # Usar completadas() en lugar de ingresos_reales()
+            queryset = Reserva.objects.completadas().filter(
                 inicio__year=year,
                 inicio__month=month
-            ).aggregate(total=Sum('servicio__precio'))['total'] or 0
+            )
+            
+            if barbero_id:
+                queryset = queryset.filter(barbero_id=barbero_id)
+            
+            revenue = queryset.aggregate(total=Sum('servicio__precio'))['total'] or 0
             
             monthly_data.append({
                 'month': meses_espanol[month],

@@ -415,7 +415,7 @@ function initializeCharts() {
     if (!isBarbero) {
         const barberCtx = document.getElementById('barberChart').getContext('2d');
         charts.barber = new Chart(barberCtx, {
-            type: 'horizontalBar',
+            type: 'bar',
             data: {
                 labels: [],
                 datasets: [{
@@ -427,6 +427,7 @@ function initializeCharts() {
                 }]
             },
             options: {
+                indexAxis: 'y',  // Esto hace que sea horizontal
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
